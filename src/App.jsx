@@ -259,7 +259,11 @@ const App = () => {
             
             {/* Brand Story Image */}
             <div className="relative mt-8 md:mt-0">
-              <div className="absolute -inset-4 border-2 border-amber-600/30 rounded-lg transform translate-x-4 translate-y-4"></div>
+              {/* 修改前: className="absolute -inset-4 ..." 
+                  修改後: className="absolute inset-0 ..." 
+                  說明: 將 -inset-4 改為 inset-0，使邊框大小與圖片容器完全一致。
+              */}
+              <div className="absolute inset-0 border-2 border-amber-600/30 rounded-lg transform translate-x-4 translate-y-4"></div>
               {/* [修改] 品牌故事圖片
                  請將您的照片命名為 story.jpg，並放入 public/images/ 資料夾中。
                  路徑已預設為 "./images/story.jpg"
