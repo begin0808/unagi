@@ -111,10 +111,18 @@ const App = () => {
       <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-b from-stone-950/60 via-stone-950/40 to-stone-950 z-10"></div>
+          {/* [修改 Hero 背景圖] 
+             請將生成的圖片下載並命名為 hero-bg-new.jpg，放入 public/images/ 資料夾。
+             路徑已設定為相對路徑 "./images/hero-bg-new.jpg"
+          */}
           <img 
-            src="https://images.unsplash.com/photo-1579887829663-67706e62e6ac?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" 
-            alt="Grilled Eel" 
+            src="./images/hero-bg-new.jpg" 
+            alt="Grilled Eel Hero Background" 
             className="w-full h-full object-cover opacity-80"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "https://images.unsplash.com/photo-1605333146460-e448b5980753?q=80&w=2000&auto=format&fit=crop"; // 備用圖片
+            }}
           />
         </div>
 
@@ -249,12 +257,21 @@ const App = () => {
               </div>
             </div>
             
+            {/* Brand Story Image */}
             <div className="relative mt-8 md:mt-0">
               <div className="absolute -inset-4 border-2 border-amber-600/30 rounded-lg transform translate-x-4 translate-y-4"></div>
+              {/* [修改] 品牌故事圖片
+                 請將您的照片命名為 story.jpg，並放入 public/images/ 資料夾中。
+                 路徑已預設為 "./images/story.jpg"
+              */}
               <img 
-                src="https://images.unsplash.com/photo-1629239851608-8e8156db6933?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
+                src="./images/story.jpg" 
                 alt="Chef grilling eel" 
                 className="relative rounded-lg shadow-2xl w-full"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://images.unsplash.com/photo-1629239851608-8e8156db6933?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"; // 載入失敗時的備用圖
+                }}
               />
             </div>
           </div>
@@ -279,15 +296,18 @@ const App = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
             {/* Placeholder Image 1 */}
             <div className="relative h-64 md:h-80 rounded-xl overflow-hidden group bg-stone-900 border border-white/5">
-               {/* [修改說明] 圖片路徑設定規則：
-                  在 Vite/React 專案中，放在 `public` 資料夾內的檔案，可以直接透過根目錄路徑 `/` 存取。
-                  因此，若您的檔案在 `public/images/01.jpg`，
-                  src 屬性請填寫 "/images/01.jpg" (不需要包含 public)。
+               {/* [修正] GitHub Pages 路徑問題：
+                  因為網站位於 /unagi/ 子目錄，使用絕對路徑 "/images/01.jpg" 會指向根目錄而錯誤。
+                  請使用 "./images/01.jpg" (相對路徑)，這樣瀏覽器會自動加上 /unagi/ 前綴。
                */}
                <img
-                 src="/images/01.jpg"
+                 src="./images/01.jpg"
                  alt="嚴選商品情境圖 1"
                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                 onError={(e) => {
+                   e.target.onerror = null;
+                   e.target.src = "https://images.unsplash.com/photo-1629239851608-8e8156db6933?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80";
+                 }}
                />
                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-6">
                  <p className="text-white font-bold text-lg">炭火直烤・香氣四溢</p>
@@ -296,13 +316,15 @@ const App = () => {
 
             {/* Placeholder Image 2 */}
             <div className="relative h-64 md:h-80 rounded-xl overflow-hidden group bg-stone-900 border border-white/5">
-               {/* 如果您有第二張圖片 (例如 02.jpg)，請依照上方規則，
-                  將 src 改為 "/images/02.jpg"
-               */}
+               {/* 同樣建議將第二張圖也改為相對路徑，假設您有 02.jpg，就改為 "./images/02.jpg" */}
                <img
-                 src="https://images.unsplash.com/photo-1582260656034-7c36a48d8c39?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
+                 src="./images/02.jpg" 
                  alt="嚴選商品情境圖 2"
                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                 onError={(e) => {
+                   e.target.onerror = null;
+                   e.target.src = "https://images.unsplash.com/photo-1582260656034-7c36a48d8c39?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80";
+                 }}
                />
                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-6">
                  <p className="text-white font-bold text-lg">真空鎖鮮・加熱即食</p>
