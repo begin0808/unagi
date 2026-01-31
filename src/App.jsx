@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   ShoppingBag, ChevronDown, Star, MessageCircle, MapPin, Phone, Instagram, Facebook, 
   Clock, CheckCircle, Award, Heart, ShieldCheck, Megaphone, Calendar, Flame, Truck, 
-  Utensils, ExternalLink 
+  Utensils, ExternalLink, User, HelpCircle, ChevronRight 
 } from 'lucide-react';
 
 // --- 產品資料 ---
@@ -39,9 +39,26 @@ const PRODUCTS = [
   }
 ];
 
+// --- 常見問題資料 (FAQ) ---
+const FAQS = [
+  {
+    question: "退換貨政策：若商品有問題該如何處理？",
+    answer: "（待更新：收到商品後請立即檢查，若發現包裝破損或解凍狀況，請於 24 小時內拍照並聯繫我們，我們將盡速為您處理。）"
+  },
+  {
+    question: "保存方式：收到後要冰冷凍還是冷藏？可以放多久？",
+    answer: "（待更新：本產品採真空包裝，收到後請務必「冷凍保存」。在未拆封且冷凍狀態下，最佳賞味期為兩年。）"
+  },
+  {
+    question: "運送細節：黑貓宅配大約幾天到？",
+    answer: "（待更新：確認訂單與款項後，我們將安排黑貓低溫宅配寄出。一般情況下，出貨後約 1-3 個工作天可送達。）"
+  }
+];
+
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+  // 控制 FAQ 折疊狀態 (預設全開或全關，這裡示範簡單列表，不需複雜狀態)
+  
   // 設定網頁頁籤標題
   useEffect(() => {
     document.title = "興旺蒲燒鰻";
@@ -77,6 +94,7 @@ const App = () => {
               </button>
               <button onClick={() => scrollToSection('products')} className="text-stone-300 hover:text-amber-500 transition-colors">嚴選商品</button>
               <button onClick={() => scrollToSection('cooking')} className="text-stone-300 hover:text-amber-500 transition-colors">美味秘訣</button>
+              <button onClick={() => scrollToSection('faq')} className="text-stone-300 hover:text-amber-500 transition-colors">購物須知</button>
               <button onClick={() => scrollToSection('contact')} className="px-4 py-2 bg-amber-600 text-stone-950 font-bold rounded hover:bg-amber-500 transition-all flex items-center gap-2">
                 <ShoppingBag size={18} />
                 立即訂購
@@ -105,6 +123,7 @@ const App = () => {
               <button onClick={() => scrollToSection('news')} className="block px-3 py-2 text-base font-bold text-red-400 w-full text-left">🔥 最新消息</button>
               <button onClick={() => scrollToSection('products')} className="block px-3 py-2 text-base font-medium text-stone-300 hover:text-white w-full text-left">嚴選商品</button>
               <button onClick={() => scrollToSection('cooking')} className="block px-3 py-2 text-base font-medium text-stone-300 hover:text-white w-full text-left">美味秘訣</button>
+              <button onClick={() => scrollToSection('faq')} className="block px-3 py-2 text-base font-medium text-stone-300 hover:text-white w-full text-left">購物須知</button>
               <button onClick={() => scrollToSection('contact')} className="block px-3 py-2 text-base font-bold text-amber-500 w-full text-left">前往訂購</button>
             </div>
           </div>
@@ -327,6 +346,8 @@ const App = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {PRODUCTS.map((product) => (
               <div key={product.id} className="group bg-stone-900 rounded-xl overflow-hidden border border-white/5 hover:border-amber-600/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(217,119,6,0.15)] flex flex-col relative">
+                
+                {/* Product Card Content */}
                 <div className="p-8 flex-1 flex flex-col">
                   <div className="absolute top-0 right-0 bg-stone-800 text-stone-300 px-4 py-2 rounded-bl-xl font-bold text-sm border-l border-b border-white/10 z-10">
                      規格 {product.code}
@@ -366,7 +387,7 @@ const App = () => {
         </div>
       </section>
 
-      {/* Cooking Guide */}
+      {/* Cooking Guide Section */}
       <section id="cooking" className="py-24 bg-stone-900 border-t border-white/5">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -378,22 +399,66 @@ const App = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { icon: Utensils, title: "微波加熱", desc: "退冰、需拆袋", time: "3 - 5 分鐘" },
-              { icon: Flame, title: "烤箱加熱", desc: "退冰、需拆袋", time: "10 - 15 分鐘", warning: "小心烤焦！" },
-              { icon: Clock, title: "氣炸鍋", desc: "退冰、需拆袋", time: "160度 8 分鐘" },
-              { icon: CheckCircle, title: "隔水加熱", desc: "無需退冰拆袋", time: "3 - 5 分鐘" },
-            ].map((item, index) => (
-              <div key={index} className="bg-stone-950 p-6 rounded-xl border border-white/5 text-center group hover:border-amber-500/50 transition-colors">
+            <div className="bg-stone-950 p-6 rounded-xl border border-white/5 text-center group hover:border-amber-500/50 transition-colors">
                <div className="w-16 h-16 bg-stone-900 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-500 group-hover:scale-110 transition-transform">
-                 <item.icon size={32} />
+                 <Utensils size={32} />
                </div>
-               <h3 className="text-white font-bold mb-2">{item.title}</h3>
-               <p className="text-stone-400 text-sm">{item.desc}<br/>{item.time}
-                 {item.warning && <br/>}
-                 {item.warning && <span className="text-xs text-amber-500/80">{item.warning}</span>}
-               </p>
+               <h3 className="text-white font-bold mb-2">微波加熱</h3>
+               <p className="text-stone-400 text-sm">退冰、需拆袋<br/>3 - 5 分鐘</p>
             </div>
+            
+            <div className="bg-stone-950 p-6 rounded-xl border border-white/5 text-center group hover:border-amber-500/50 transition-colors">
+               <div className="w-16 h-16 bg-stone-900 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-500 group-hover:scale-110 transition-transform">
+                 <Flame size={32} />
+               </div>
+               <h3 className="text-white font-bold mb-2">烤箱加熱</h3>
+               <p className="text-stone-400 text-sm">退冰、需拆袋<br/>10 - 15 分鐘<br/><span className="text-xs text-amber-500/80">小心烤焦！</span></p>
+            </div>
+
+            <div className="bg-stone-950 p-6 rounded-xl border border-white/5 text-center group hover:border-amber-500/50 transition-colors">
+               <div className="w-16 h-16 bg-stone-900 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-500 group-hover:scale-110 transition-transform">
+                 <Clock size={32} />
+               </div>
+               <h3 className="text-white font-bold mb-2">氣炸鍋</h3>
+               <p className="text-stone-400 text-sm">退冰、需拆袋<br/>160度 8 分鐘</p>
+            </div>
+
+            <div className="bg-stone-950 p-6 rounded-xl border border-white/5 text-center group hover:border-amber-500/50 transition-colors">
+               <div className="w-16 h-16 bg-stone-900 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-500 group-hover:scale-110 transition-transform">
+                 <CheckCircle size={32} />
+               </div>
+               <h3 className="text-white font-bold mb-2">隔水加熱</h3>
+               <p className="text-stone-400 text-sm">無需退冰拆袋<br/>3 - 5 分鐘</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* NEW: FAQ & Policy Section (Added as requested) */}
+      <section id="faq" className="py-20 bg-stone-900 border-t border-white/5">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-4 flex items-center justify-center gap-2">
+              <HelpCircle className="text-amber-500" /> 常見問題與購物須知
+            </h2>
+            <p className="text-stone-400">
+              關於配送、保存與退換貨的相關說明，讓您買得更安心。
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {FAQS.map((faq, index) => (
+              <div key={index} className="bg-stone-950 rounded-xl border border-white/10 overflow-hidden">
+                <div className="p-6">
+                  <h3 className="text-lg font-bold text-amber-500 mb-3 flex items-start gap-2">
+                    <span className="mt-1"><ChevronRight size={16} /></span>
+                    {faq.question}
+                  </h3>
+                  <p className="text-stone-300 pl-6 leading-relaxed">
+                    {faq.answer}
+                  </p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -405,6 +470,8 @@ const App = () => {
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+            
+            {/* Information Column */}
             <div className="space-y-8">
               <div>
                 <h2 className="text-4xl font-bold text-white mb-4">立即預訂美味</h2>
@@ -451,8 +518,10 @@ const App = () => {
               </div>
             </div>
 
+            {/* Google Form Link Area (New Window) */}
             <div className="bg-stone-900 p-1 rounded-2xl shadow-2xl border border-white/10 h-full flex items-center">
               <div className="bg-white w-full h-[500px] md:h-auto rounded-xl overflow-hidden relative flex flex-col items-center justify-center text-center p-10 py-20">
+                
                 <div className="mb-6 bg-amber-100 p-5 rounded-full text-amber-600 animate-bounce-slow">
                   <ShoppingBag size={56} />
                 </div>
@@ -460,6 +529,7 @@ const App = () => {
                 <p className="text-stone-600 mb-8 max-w-sm text-lg leading-relaxed">
                   點擊下方按鈕將開啟 Google 訂購表單 (另開視窗)。<br/>填寫完畢後，我們將寄送確認信給您。
                 </p>
+                
                 <a 
                   href="https://docs.google.com/forms/d/1W9iyrVFahsreK_HU9wabdsL2WUhg054upirHDNxqVBA/viewform" 
                   target="_blank" 
@@ -468,16 +538,30 @@ const App = () => {
                 >
                   前往填寫訂購單 <ExternalLink size={20} className="group-hover:translate-x-1 transition-transform"/>
                 </a>
+              
               </div>
             </div>
+
           </div>
         </div>
       </section>
 
+      {/* Footer */}
       <footer className="bg-stone-950 py-12 border-t border-white/10 text-center">
+        {/* Contact Info added here */}
+        <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8 mb-6 text-stone-400">
+          <p className="flex items-center gap-2">
+             <Phone size={16} className="text-amber-500" />
+             <span>電話：(待更新)</span>
+          </p>
+          <p className="flex items-center gap-2">
+             <MapPin size={16} className="text-amber-500" />
+             <span>地址：(待更新)</span>
+          </p>
+        </div>
+
         <p className="text-stone-500 text-sm">
-          &copy; 2026 興旺蒲燒鰻. All rights reserved.<br/>
-          Designed for STUDIO 0808.
+          &copy; 2026 興旺蒲燒鰻. All rights reserved.
         </p>
       </footer>
     </div>
