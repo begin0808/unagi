@@ -137,7 +137,8 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     // 自取／面交不需要地址，長度檢查要放行
     else if (!/自取|面交/.test(address) && address.trim().length < 8)
       next.address = '請填寫完整地址（含縣市與門牌號碼）；自取或面交請直接填「自取」或「面交」';
-    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+    if (!email.trim()) next.email = '請填寫 Email，我們會寄送訂單確認信給您核對';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
       next.email = 'Email 格式看起來不正確';
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -203,8 +204,9 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           </p>
         )}
         <p className="text-stone-400 text-sm sm:text-base leading-relaxed max-w-md mx-auto mb-8">
-          我們已收到您的訂單，將盡快由專人與您聯繫確認付款方式與出貨時間。
-          若您留了 Email，確認信會一併寄送給您。
+          訂單確認信已寄至您填寫的 Email，請收信核對訂購內容；
+          若有任何需要更正的地方，直接回覆該封信件告知我們即可。
+          我們也會盡快由專人與您聯繫確認付款方式與出貨時間。
         </p>
         <button
           onClick={resetAll}
@@ -300,7 +302,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               placeholder="臺南市 710 永康區○○路○○巷 100 號" autoComplete="street-address" />
           </Field>
 
-          <Field id="of-email" label="Email" hint="選填，填了會收到訂單確認信" error={errors.email}>
+          <Field id="of-email" label="Email" required hint="訂單確認信會寄到這裡，請確認填寫正確" error={errors.email}>
             <input id="of-email" className={inputClass} value={email} type="email"
               onChange={(e) => setEmail(e.target.value)} placeholder="you@gmail.com" autoComplete="email" />
           </Field>

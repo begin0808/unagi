@@ -664,7 +664,8 @@ const App = () => {
                 <h4 className="text-white font-bold text-sm sm:text-base">訂購小叮嚀</h4>
                 <p className="text-stone-400 text-xs sm:text-sm leading-relaxed mt-1">
                   規格 A 為 3 條裝、B 為 4 條裝、C 為 5 條裝，每包均為 1 公斤，可自由混搭。
-                  送出訂單後將由專人與您聯繫確認付款方式與出貨時間；中秋等節慶檔期物流較繁忙，建議提早下單。
+                  送出後會立即寄一封訂單確認信到您填寫的 Email，請務必收信核對；內容有誤直接回覆該封信告知即可。
+                  我們也會由專人與您聯繫確認付款方式與出貨時間；中秋等節慶檔期物流較繁忙，建議提早下單。
                 </p>
               </div>
             </div>
