@@ -4,6 +4,8 @@ import {
   Clock, CheckCircle, Award, Sparkles, Flame, Truck, 
   Utensils, ExternalLink, HelpCircle, ChevronRight, Gift
 } from 'lucide-react';
+import OrderForm from './components/OrderForm';
+import { EMPTY_QUANTITIES, type Quantities, type SpecId } from './lib/pricing';
 
 // --- 產品資料 ---
 const PRODUCTS = [
@@ -75,6 +77,7 @@ const FAQS = [
 
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [quantities, setQuantities] = useState<Quantities>({ ...EMPTY_QUANTITIES });
   
   // 設定網頁頁籤標題
   useEffect(() => {
@@ -88,6 +91,12 @@ const App = () => {
       element.scrollIntoView({ behavior: 'smooth' });
     }
     setIsMenuOpen(false);
+  };
+
+  // 規格卡片的按鈕：數量 +1 並捲到訂購區
+  const addSpecToOrder = (id: SpecId) => {
+    setQuantities((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+    scrollToSection('contact');
   };
 
   return (
@@ -516,10 +525,10 @@ const App = () => {
                   </p>
                   
                   <button 
-                    onClick={() => scrollToSection('contact')}
+                    onClick={() => addSpecToOrder(product.id as SpecId)}
                     className="w-full py-3 bg-stone-800 hover:bg-amber-600 text-stone-100 hover:text-stone-950 font-bold rounded-xl transition-all flex items-center justify-center gap-2 group-hover:shadow-md"
                   >
-                    選擇此規格訂購 <ChevronRight size={18} />
+                    加入訂購單 <ChevronRight size={18} />
                   </button>
                 </div>
               </div>
@@ -626,96 +635,39 @@ const App = () => {
         </div>
       </section>
 
-      {/* Order & Contact Section */}
+      {/* Order Section */}
       <section id="contact" className="py-24 bg-stone-900 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-amber-600/5 skew-x-12 transform translate-x-1/4 pointer-events-none"></div>
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-            
-            {/* Information Column */}
-            <div className="lg:col-span-6 space-y-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-10">
+            <div className="inline-block bg-amber-600/20 text-amber-300 px-4 py-1 rounded-full text-sm font-bold mb-3 border border-amber-500/30">
+              線上訂購・黑貓冷凍宅配
+            </div>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 [text-wrap:balance]">
+              立即預約頂級美味
+            </h2>
+            <p className="text-stone-400 text-base sm:text-lg max-w-xl mx-auto [text-wrap:balance] leading-relaxed">
+              <span className="inline-block">選好規格數量、填妥收件資料即可送出訂單，</span>
+              <span className="inline-block">系統會自動為您計算運費與應付總金額。</span>
+            </p>
+          </div>
+
+          <OrderForm quantities={quantities} setQuantities={setQuantities} />
+
+          <div className="mt-8 max-w-3xl mx-auto bg-stone-950/70 p-5 rounded-xl border border-white/5">
+            <div className="flex items-start gap-3">
+              <div className="bg-amber-600/20 p-2 rounded-lg text-amber-400 flex-shrink-0 mt-0.5">
+                <MessageCircle size={20} />
+              </div>
               <div>
-                <div className="inline-block bg-amber-600/20 text-amber-300 px-3 py-1 rounded-full text-xs font-bold mb-3 border border-amber-500/30">
-                  訂購與配送
-                </div>
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">立即預約頂級美味</h2>
-                <p className="text-stone-300 text-base leading-relaxed">
-                  點擊右側訂購單連結填寫資料，我們收到訂單後將立即為您安排黑貓冷凍保鮮出貨！
-                </p>
-              </div>
-
-              {/* 運費規則卡片 */}
-              <div className="bg-stone-950 rounded-2xl p-6 border border-amber-500/30 shadow-xl">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                   <Truck className="text-amber-400" /> 黑貓冷凍宅配・運費計費說明
-                </h3>
-                <ul className="space-y-3 text-stone-300 text-sm sm:text-base">
-                   <li className="flex justify-between items-center border-b border-white/10 pb-2.5">
-                      <span className="font-medium">2 公斤以下 (1~2包)</span>
-                      <span className="font-bold text-amber-300 text-lg">運費 $225</span>
-                   </li>
-                   <li className="flex justify-between items-center border-b border-white/10 pb-2.5">
-                      <span className="font-medium">3 ～ 4 公斤 (3~4包)</span>
-                      <span className="font-bold text-amber-300 text-lg">運費 $290</span>
-                   </li>
-                   <li className="flex justify-between items-center pt-1 bg-green-950/30 p-2.5 rounded-lg border border-green-500/30">
-                      <span className="font-bold text-white">5 公斤以上 (5包以上)</span>
-                      <span className="bg-green-600 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full shadow">
-                        🎉 全臺免運費！
-                      </span>
-                   </li>
-                </ul>
-              </div>
-
-              <div className="bg-stone-950/70 p-5 rounded-xl border border-white/5 space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="bg-amber-600/20 p-2 rounded-lg text-amber-400 flex-shrink-0 mt-0.5">
-                    <MessageCircle size={20} />
-                  </div>
-                  <div>
-                    <h4 className="text-white font-bold text-sm sm:text-base">訂購小叮嚀</h4>
-                    <p className="text-stone-400 text-xs sm:text-sm leading-relaxed mt-1">
-                      填寫訂購表單時，請務必選擇需要的規格數量（A：3條裝 / B：4條裝 / C：5條裝），並留下正確的收件人姓名、電話及收件地址。
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Google Form Link Area */}
-            <div className="lg:col-span-6 bg-stone-950 p-2 rounded-3xl shadow-2xl border border-amber-500/30">
-              <div className="bg-gradient-to-b from-stone-900 to-stone-950 rounded-2xl overflow-hidden relative flex flex-col items-center justify-center text-center p-8 sm:p-10 py-14 border border-white/5">
-                
-                <div className="mb-5 bg-amber-500/10 p-5 rounded-full text-amber-400 border border-amber-500/20 shadow-inner">
-                  <ShoppingBag size={52} />
-                </div>
-                
-                <h3 className="text-white text-2xl sm:text-3xl font-extrabold mb-3">
-                  準備好品嚐頂級青口鰻了嗎？
-                </h3>
-                
-                <p className="text-stone-400 mb-8 max-w-sm text-sm sm:text-base leading-relaxed [text-wrap:balance]">
-                  <span className="inline-block">點擊下方按鈕前往 Google 官方訂購表單。</span>
-                  <span className="inline-block">均一特惠價 <span className="text-amber-400 font-bold whitespace-nowrap">$1,000 / kg</span>，數量有限售完為止！</span>
-                </p>
-                
-                <a 
-                  href="https://docs.google.com/forms/d/1W9iyrVFahsreK_HU9wabdsL2WUhg054upirHDNxqVBA/viewform" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="px-8 sm:px-10 py-4 sm:py-5 bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-extrabold text-lg sm:text-xl rounded-xl shadow-xl hover:from-amber-400 hover:to-amber-500 hover:scale-105 transition-all w-full flex items-center justify-center gap-3 group"
-                >
-                  <span>前往填寫線上訂購單</span>
-                  <ExternalLink size={20} className="group-hover:translate-x-1 transition-transform"/>
-                </a>
-
-                <p className="mt-4 text-xs text-stone-500">
-                  ※ 另開新視窗開啟 Google 表單，資料傳輸皆受安全加密保護
+                <h4 className="text-white font-bold text-sm sm:text-base">訂購小叮嚀</h4>
+                <p className="text-stone-400 text-xs sm:text-sm leading-relaxed mt-1">
+                  規格 A 為 3 條裝、B 為 4 條裝、C 為 5 條裝，每包均為 1 公斤，可自由混搭。
+                  送出訂單後將由專人與您聯繫確認付款方式與出貨時間；中秋等節慶檔期物流較繁忙，建議提早下單。
                 </p>
               </div>
             </div>
-
           </div>
         </div>
       </section>
