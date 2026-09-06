@@ -64,6 +64,10 @@ const FAQS = [
     answer: "完全不需要！我們已為您調配道地正宗日式蒲燒醬汁，退冰後微波 3~5 分鐘即可直接鋪在熱騰騰白飯上享用。中秋節更可直接放上烤肉架、氣炸鍋或烤箱烘烤，炭香撲鼻、香氣四溢！"
   },
   {
+    question: "【興旺蒲燒鰻】的產地來源為何？為何受到日本名店肯定？",
+    answer: "本品牌源自彰化縣福興鄉「吳奇清養鰻場」，深耕在地數十年，堅持以深海魚粉精細飼育頂級青口鰻。2025 年底更榮獲日本水產權威月刊《ACR》專案特載報導，日本福岡小倉百年鰻魚料理教父「田舎庵」緒方大社長、長野「観光荘」宮澤健社長親臨福興鄉魚塭考察並高度讚揚。品質完全比照外銷日本最高標準！"
+  },
+  {
     question: "退換貨政策：若收到商品有瑕疵或解凍該如何處理？",
     answer: "生鮮冷凍食品攸關食品安全，我們出貨皆嚴格檢驗。若您收到包裹時發現外箱嚴重破損、真空袋失真空或商品解凍變質，請於收件當日立即拍照錄影並聯繫我們，我們將第一時間為您辦理補寄或換貨處理。"
   }
@@ -109,6 +113,15 @@ const App = () => {
                 <Sparkles size={16} /> 中秋限定特惠
               </button>
               <button onClick={() => scrollToSection('story')} className="text-stone-300 hover:text-amber-500 transition-colors">青口鰻傳奇</button>
+              <a 
+                href="./ACR.html" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-amber-300 hover:text-white transition-colors font-semibold flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1 rounded-lg border border-amber-500/30 text-sm group shadow-sm"
+              >
+                <span>🇯🇵 日本採訪報導</span>
+                <ExternalLink size={13} className="group-hover:translate-x-0.5 transition-transform" />
+              </a>
               <button onClick={() => scrollToSection('products')} className="text-stone-300 hover:text-amber-500 transition-colors">規格與售價</button>
               <button onClick={() => scrollToSection('cooking')} className="text-stone-300 hover:text-amber-500 transition-colors">美味秘訣</button>
               <button onClick={() => scrollToSection('faq')} className="text-stone-300 hover:text-amber-500 transition-colors">常見問題</button>
@@ -139,6 +152,15 @@ const App = () => {
             <div className="px-4 pt-3 pb-4 space-y-2">
               <button onClick={() => scrollToSection('news')} className="block px-3 py-2 text-base font-bold text-amber-400 w-full text-left">🥮 中秋限定特惠</button>
               <button onClick={() => scrollToSection('story')} className="block px-3 py-2 text-base font-medium text-stone-300 hover:text-white w-full text-left">青口鰻傳奇</button>
+              <a 
+                href="./ACR.html" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="px-3 py-2 text-base font-bold text-amber-300 w-full text-left bg-amber-500/10 rounded-lg flex items-center justify-between border border-amber-500/20"
+              >
+                <span>🇯🇵 日本《ACR》月刊專訪報導</span>
+                <ExternalLink size={16} />
+              </a>
               <button onClick={() => scrollToSection('products')} className="block px-3 py-2 text-base font-medium text-stone-300 hover:text-white w-full text-left">規格與售價</button>
               <button onClick={() => scrollToSection('cooking')} className="block px-3 py-2 text-base font-medium text-stone-300 hover:text-white w-full text-left">美味秘訣</button>
               <button onClick={() => scrollToSection('faq')} className="block px-3 py-2 text-base font-medium text-stone-300 hover:text-white w-full text-left">常見問題</button>
@@ -165,10 +187,18 @@ const App = () => {
         </div>
 
         <div className="relative z-20 text-center px-4 max-w-4xl mx-auto py-16">
-          <div className="inline-flex items-center gap-2 bg-amber-500/20 text-amber-300 border border-amber-500/40 px-4 py-1.5 rounded-full text-sm font-semibold tracking-wider mb-6 animate-fade-in-up">
-            <Award size={16} className="text-amber-400" />
-            彰化深耕數十年・外銷日本頂級極品「青口鰻」
-          </div>
+          <a 
+            href="./ACR.html" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500/20 via-stone-900 to-amber-500/20 text-amber-300 border border-amber-500/40 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold tracking-wider mb-6 hover:border-amber-400 hover:text-white transition-all group shadow-lg animate-fade-in-up"
+          >
+            <Award size={16} className="text-amber-400 group-hover:scale-110 transition-transform" />
+            <span>彰化福興 吳奇清養鰻場・榮獲日本權威《ACR》專訪報導</span>
+            <span className="bg-amber-500 text-stone-950 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 group-hover:bg-amber-400">
+              閱讀報導 <ExternalLink size={10} />
+            </span>
+          </a>
           
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-white mb-6 tracking-wider leading-tight">
             【興旺】頂級蒲燒鰻<br/>
@@ -298,57 +328,74 @@ const App = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="space-y-6">
               <div className="inline-block border-b-2 border-amber-500 pb-1">
-                <span className="text-amber-500 font-bold tracking-widest uppercase text-sm">BRAND STORY・品牌故事</span>
+                <span className="text-amber-500 font-bold tracking-widest uppercase text-sm">BRAND STORY・產地職人</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-snug">
-                彰化鹿港深耕數十年，<br/>
-                <span className="text-amber-400">長年外銷日本東京的頂級「青口鰻」</span>
+                彰化福興深耕數十年，<br/>
+                <span className="text-amber-400">日本名店社長親赴魚塭實勘認證</span>
               </h2>
               <div className="text-stone-300 text-base sm:text-lg leading-relaxed space-y-4">
                 <p>
-                  <strong className="text-white">【興旺蒲燒鰻】</strong>深耕彰化數十載，長年專注於培育外銷日本頂級料亭的最高品質——<strong className="text-amber-400">「青口鰻」</strong>。
+                  <strong className="text-white">【興旺蒲燒鰻】</strong>源自彰化縣福興鄉<strong className="text-amber-400">「吳奇清養鰻場」</strong>，長年專注於培育外銷日本頂級料亭的最高品質——<strong className="text-amber-400">「青口鰻」</strong>。
                 </p>
                 <p>
-                  「青口鰻」以深海魚粉精細飼育，擁有絕佳的油脂分佈、細緻無比的肉質與極少細刺。過去，這樣的高規品質在台灣市場幾乎「一口難求」，絕大多數都第一時間空運外銷日本，更曾榮獲<strong className="text-white">日本電視台跨海專訪</strong>之殊榮。
+                  我們以深海魚粉與純淨水質精細飼育，培育出的青口鰻背青腹白、油脂豐厚、肉質細膩柔滑。2025 年底，日本權威水產月刊《ACR》偕同全日本鰻魚料理界泰斗——福岡小倉百年名店<strong className="text-white">「田舎庵」緒方大社長</strong>、長野<strong className="text-white">「観光荘」宮澤健社長</strong>與台灣鰻蝦同業公會<strong className="text-white">郭瓊英理事長</strong>，專程實地走訪<strong>福興鄉吳奇清養鰻場</strong>魚塭池畔深入考察，給予最高讚賞！
                 </p>
                 <p>
-                  今年因外銷市場轉變，我們決定將這份長年代表台灣驕傲的外銷頂級極品，<strong className="text-amber-300">完整留給台灣自家人！</strong>
-                </p>
-                <p className="text-stone-400 text-base">
-                  不用出國、不必去高檔日本料理店，在家只要微波 3~5 分鐘，就能輕鬆享用一碗熱氣騰騰、油亮誘人的頂級蒲燒鰻魚飯。
+                  過去，這樣受日本名店青睞的頂級極品幾乎第一時間空運外銷；今年我們決定將這份長年代表台灣驕傲的外銷頂級極品，<strong className="text-amber-300">完整留給台灣自家人！</strong>
                 </p>
               </div>
               
               <div className="pt-2">
-                <div className="flex items-center gap-4 bg-stone-950/80 p-4 rounded-xl border border-amber-500/20">
-                   <div className="bg-amber-600/20 p-3 rounded-full text-amber-400 flex-shrink-0">
-                     <Award size={30} />
-                   </div>
-                   <div>
-                     <h4 className="text-white font-bold text-base sm:text-lg">日本電視台跨海採訪認證</h4>
-                     <p className="text-stone-400 text-sm">外銷日本第一名品質，台灣小農產地直送的安心保證</p>
-                   </div>
-                </div>
+                <a 
+                  href="./ACR.html" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="block group"
+                >
+                  <div className="flex items-center justify-between gap-4 bg-stone-950/90 p-4 rounded-xl border border-amber-500/30 hover:border-amber-400 transition-all shadow-lg group-hover:bg-stone-900">
+                    <div className="flex items-center gap-3.5">
+                      <div className="bg-amber-600/20 p-2.5 rounded-xl text-amber-400 flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <Award size={28} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-white font-bold text-base sm:text-lg group-hover:text-amber-300 transition-colors">
+                            日本權威《ACR》專題報導全譯
+                          </h4>
+                          <span className="bg-red-700 text-white text-[10px] font-bold px-2 py-0.5 rounded">中日對照</span>
+                        </div>
+                        <p className="text-stone-400 text-xs sm:text-sm mt-0.5">
+                          「田舎庵」緒方社長親訪彰化福興吳奇清養鰻場實勘紀行
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-amber-400 text-xs font-bold gap-1 flex-shrink-0">
+                      <span>點擊閱讀</span>
+                      <ExternalLink size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </div>
+                </a>
               </div>
             </div>
             
-            {/* Brand Story Image */}
+            {/* Brand Story Image - Authentic Photo from ACR Report */}
             <div className="relative">
               <div className="absolute -inset-2 bg-gradient-to-r from-amber-600/30 to-red-600/30 rounded-2xl blur-lg"></div>
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-stone-900">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-amber-500/30 bg-stone-900">
                 <img 
-                  src="./images/story.jpg" 
-                  alt="Chef grilling premium eel" 
+                  src="./acr_images/wu_group_photo.jpg" 
+                  alt="吳奇清養鰻場與日本名店訪查團合影" 
                   className="w-full h-auto object-cover"
-                  onError={(e) => {
-                    const target = e.currentTarget as HTMLImageElement;
-                    target.onerror = null;
-                    target.src = "https://images.unsplash.com/photo-1629239851608-8e8156db6933?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80";
-                  }}
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-stone-950 via-stone-950/80 to-transparent p-6">
-                  <p className="text-white font-bold text-lg">古法炭烤・匠心蒲燒</p>
-                  <p className="text-stone-300 text-sm">每一尾青口鰻皆歷經嚴謹挑選與多道炭火慢烤</p>
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-stone-950 via-stone-950/90 to-transparent p-5">
+                  <span className="bg-amber-500 text-stone-950 text-xs font-extrabold px-2.5 py-0.5 rounded mb-1.5 inline-block">
+                    日本《ACR》月刊刊載實景
+                  </span>
+                  <p className="text-white font-bold text-base sm:text-lg">彰化福興 吳奇清養鰻場池畔</p>
+                  <p className="text-stone-300 text-xs sm:text-sm leading-relaxed">
+                    吳奇清先生、吳夫人與日本「田舎庵」緒方社長、鰻蝦公會郭理事長於魚塭合影
+                  </p>
                 </div>
               </div>
             </div>
@@ -660,15 +707,24 @@ const App = () => {
             <span className="font-bold text-lg tracking-wider text-white">興旺蒲燒鰻</span>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-8 mb-6 text-stone-400 text-sm">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-8 mb-4 text-stone-400 text-sm">
             <p className="flex items-center gap-1.5">
                <MapPin size={16} className="text-amber-500" />
-               <span>產地：台灣彰化鹿港</span>
+               <span>產地：台灣彰化鹿港 / 福興（吳奇清養鰻場）</span>
             </p>
             <p className="flex items-center gap-1.5">
                <Truck size={16} className="text-amber-500" />
                <span>配送：黑貓低溫冷凍宅配</span>
             </p>
+            <a 
+               href="./ACR.html" 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               className="flex items-center gap-1 text-amber-400 hover:text-amber-300 font-semibold transition-colors underline underline-offset-4"
+            >
+               <span>🇯🇵 日本《ACR》專訪報導（中日對照）</span>
+               <ExternalLink size={14} />
+            </a>
           </div>
 
           <p className="text-stone-500 text-xs">
