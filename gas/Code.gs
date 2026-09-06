@@ -10,6 +10,18 @@
 
 /* ===================== 設定區（可依需要修改） ===================== */
 
+/**
+ * 訂單試算表的 ID。開啟試算表後看網址列：
+ *   https://docs.google.com/spreadsheets/d/【中間這一長串就是 ID】/edit
+ * 把那一串貼進下面的引號中。
+ *
+ * 如果本程式是從試算表的「擴充功能 → Apps Script」建立的，可以留空字串，
+ * 程式會自動使用它所屬的那份試算表。
+ * 若出現 “You do not have permission to call SpreadsheetApp.getActiveSpreadsheet”
+ * 的錯誤，就代表本程式並未綁定試算表，請務必在這裡填入 ID。
+ */
+const SPREADSHEET_ID = '';
+
 /** 訂單要寫入的工作表名稱，不存在會自動建立 */
 const SHEET_NAME = '訂單';
 
@@ -118,7 +130,8 @@ function doPost(e) {
     return json({ ok: true, orderNo: orderNo, total: total });
   } catch (err) {
     console.error(err);
-    return json({ ok: false, message: '伺服器處理訂單時發生錯誤' });
+    // 帶出錯誤內容，設定階段比較好判斷問題出在哪
+    return json({ ok: false, message: '伺服器處理訂單時發生錯誤：' + (err && err.message ? err.message : err) });
   }
 }
 
@@ -141,8 +154,21 @@ function toCount(v) {
   return n;
 }
 
-function getSheet_() {
+/** 取得訂單試算表：優先用設定的 ID，其次用本程式所屬的試算表 */
+function getSpreadsheet_() {
+  if (SPREADSHEET_ID) return SpreadsheetApp.openById(SPREADSHEET_ID);
+
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new Error(
+      '找不到試算表。本程式不是從試算表建立的，請在設定區的 SPREADSHEET_ID 填入試算表 ID。'
+    );
+  }
+  return ss;
+}
+
+function getSheet_() {
+  const ss = getSpreadsheet_();
   let sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
 
