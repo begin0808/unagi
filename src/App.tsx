@@ -655,7 +655,7 @@ const App = () => {
 
           <OrderForm quantities={quantities} setQuantities={setQuantities} />
 
-          <div className="mt-8 max-w-3xl mx-auto bg-stone-950/70 p-5 rounded-xl border border-white/5">
+          <div className="mt-8 max-w-3xl mx-auto bg-stone-800/70 p-5 rounded-xl border border-white/10">
             <div className="flex items-start gap-3">
               <div className="bg-amber-600/20 p-2 rounded-lg text-amber-400 flex-shrink-0 mt-0.5">
                 <MessageCircle size={20} />

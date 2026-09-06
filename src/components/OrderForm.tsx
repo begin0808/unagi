@@ -40,13 +40,13 @@ const Stepper = ({
   max?: number;
   label: string;
 }) => (
-  <div className="flex items-center gap-1 bg-stone-950 rounded-xl border border-white/10 p-1">
+  <div className="flex items-center gap-1 bg-stone-900 rounded-xl border border-white/15 p-1">
     <button
       type="button"
       aria-label={`減少${label}`}
       onClick={() => onChange(Math.max(min, value - 1))}
       disabled={value <= min}
-      className="w-9 h-9 rounded-lg flex items-center justify-center text-stone-300 hover:bg-stone-800 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+      className="w-9 h-9 rounded-lg flex items-center justify-center text-stone-300 hover:bg-stone-700 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
     >
       <Minus size={16} />
     </button>
@@ -89,7 +89,7 @@ const Field = ({
     <label htmlFor={id} className="block text-sm font-bold text-stone-200 mb-1.5">
       {label}
       {required && <span className="text-red-400 ml-1">*</span>}
-      {hint && <span className="font-normal text-stone-500 text-xs ml-2">{hint}</span>}
+      {hint && <span className="font-normal text-stone-400 text-xs ml-2">{hint}</span>}
     </label>
     {children}
     {error && (
@@ -101,7 +101,7 @@ const Field = ({
 );
 
 const inputClass =
-  'w-full bg-stone-950 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-stone-600 outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/40 transition-colors';
+  'w-full bg-stone-900 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-stone-500 outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/40 transition-colors';
 
 const OrderForm = ({ quantities, setQuantities }: Props) => {
   const [giftBoxes, setGiftBoxes] = useState(0);
@@ -134,7 +134,9 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     if (!phone.trim()) next.phone = '請填寫聯絡電話';
     else if (!/^[\d\-+()\s]{8,20}$/.test(phone.trim())) next.phone = '電話格式看起來不正確';
     if (!address.trim()) next.address = '請填寫收貨地址';
-    else if (address.trim().length < 8) next.address = '請填寫完整地址（含縣市與門牌號碼）';
+    // 自取／面交不需要地址，長度檢查要放行
+    else if (!/自取|面交/.test(address) && address.trim().length < 8)
+      next.address = '請填寫完整地址（含縣市與門牌號碼）；自取或面交請直接填「自取」或「面交」';
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
       next.email = 'Email 格式看起來不正確';
     setErrors(next);
@@ -190,7 +192,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   // ---------- 完成畫面 ----------
   if (step === 'done') {
     return (
-      <div className="bg-stone-950 rounded-3xl border border-green-500/40 p-8 sm:p-12 text-center shadow-2xl">
+      <div className="bg-stone-800 rounded-3xl border border-green-500/40 p-8 sm:p-12 text-center shadow-2xl">
         <div className="w-20 h-20 rounded-full bg-green-500/15 text-green-400 flex items-center justify-center mx-auto mb-5 border border-green-500/30">
           <CheckCircle2 size={44} />
         </div>
@@ -206,7 +208,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
         </p>
         <button
           onClick={resetAll}
-          className="px-8 py-3 bg-stone-800 hover:bg-stone-700 text-stone-100 font-bold rounded-xl transition-colors"
+          className="px-8 py-3 bg-stone-700 hover:bg-stone-600 text-stone-100 font-bold rounded-xl transition-colors"
         >
           再訂購一筆
         </button>
@@ -219,11 +221,11 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
       {/* ---------- 左：填寫區 ---------- */}
       <div id="order-form-fields" className="lg:col-span-7 space-y-6">
         {/* 規格數量 */}
-        <div className="bg-stone-950 rounded-2xl border border-white/10 p-5 sm:p-6">
+        <div className="bg-stone-800 rounded-2xl border border-white/10 p-5 sm:p-6 shadow-lg">
           <h3 className="text-white font-bold text-lg mb-1 flex items-center gap-2">
             <ClipboardList size={20} className="text-amber-400" /> 選擇規格與數量
           </h3>
-          <p className="text-stone-500 text-xs mb-5">
+          <p className="text-stone-400 text-xs mb-5">
             每包 1 公斤，均一價 {currency(PRICE_PER_KG)}／公斤，可混搭不同規格
           </p>
 
@@ -233,7 +235,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 key={spec.id}
                 className={`flex items-center justify-between gap-3 p-3.5 rounded-xl border transition-colors ${
                   quantities[spec.id] > 0
-                    ? 'border-amber-500/50 bg-amber-500/5'
+                    ? 'border-amber-400/60 bg-amber-500/10'
                     : 'border-white/10 bg-stone-900/60'
                 }`}
               >
@@ -244,7 +246,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                     </span>
                     <span className="text-white font-bold text-sm sm:text-base truncate">{spec.name}</span>
                   </div>
-                  <p className="text-stone-500 text-xs mt-0.5">
+                  <p className="text-stone-400 text-xs mt-0.5">
                     {spec.detail}・{spec.hint}
                   </p>
                 </div>
@@ -269,7 +271,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
                 <Gift size={18} className="text-amber-400" /> 送禮禮盒
               </div>
-              <p className="text-stone-500 text-xs mt-0.5">
+              <p className="text-stone-400 text-xs mt-0.5">
                 每個 {currency(GIFT_BOX_PRICE)}，一盒可裝 3~4 片，送禮更體面
               </p>
             </div>
@@ -278,7 +280,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
         </div>
 
         {/* 收件資料 */}
-        <div className={`bg-stone-950 rounded-2xl border border-white/10 p-5 sm:p-6 space-y-4 ${configured ? '' : 'hidden'}`}>
+        <div className={`bg-stone-800 rounded-2xl border border-white/10 p-5 sm:p-6 space-y-4 shadow-lg ${configured ? '' : 'hidden'}`}>
           <h3 className="text-white font-bold text-lg mb-1">收件資料</h3>
 
           <Field id="of-name" label="收件人姓名" required error={errors.name}>
@@ -292,15 +294,15 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           </Field>
 
           <Field id="of-address" label="收貨地址" required error={errors.address}
-            hint="黑貓冷凍宅配，請填寫完整地址">
+            hint="黑貓冷凍宅配；自取或面交請直接填「自取」或「面交」">
             <input id="of-address" className={inputClass} value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="彰化縣福興鄉○○路 100 號" autoComplete="street-address" />
+              placeholder="臺南市 710 永康區○○路○○巷 100 號" autoComplete="street-address" />
           </Field>
 
           <Field id="of-email" label="Email" hint="選填，填了會收到訂單確認信" error={errors.email}>
             <input id="of-email" className={inputClass} value={email} type="email"
-              onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" />
+              onChange={(e) => setEmail(e.target.value)} placeholder="you@gmail.com" autoComplete="email" />
           </Field>
 
           <Field id="of-note" label="備註" hint="選填，例如指定到貨日、發票抬頭">
@@ -320,7 +322,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
       {/* ---------- 右：訂單摘要 ---------- */}
       <div className="lg:col-span-5">
         <div className="lg:sticky lg:top-24 space-y-4">
-          <div className="bg-gradient-to-b from-stone-900 to-stone-950 rounded-2xl border border-amber-500/30 p-5 sm:p-6 shadow-xl">
+          <div className="bg-gradient-to-b from-stone-800 to-stone-900 rounded-2xl border border-amber-500/40 p-5 sm:p-6 shadow-xl">
             <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
               <ShoppingBag size={20} className="text-amber-400" /> 訂單摘要
             </h3>
@@ -346,7 +348,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               )}
 
               {totals.packs === 0 && (
-                <p className="text-stone-500 text-sm py-3 text-center">尚未選擇商品</p>
+                <p className="text-stone-400 text-sm py-3 text-center">尚未選擇商品</p>
               )}
 
               <div className="flex justify-between items-baseline text-stone-300 pt-2.5 border-t border-white/10">
@@ -385,7 +387,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 >
                   確認訂單內容 <ShoppingBag size={20} />
                 </button>
-                <p className="text-stone-500 text-[11px] leading-relaxed mt-3 text-center">
+                <p className="text-stone-400 text-[11px] leading-relaxed mt-3 text-center">
                   送出後將由專人與您聯繫確認付款方式與出貨時間，現階段不需線上付款。
                 </p>
               </>
@@ -399,7 +401,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 >
                   前往填寫訂購單 <ExternalLink size={19} />
                 </a>
-                <p className="text-stone-500 text-[11px] leading-relaxed mt-3 text-center">
+                <p className="text-stone-400 text-[11px] leading-relaxed mt-3 text-center">
                   以上為金額試算，實際下單請於訂購單中填寫，我們收到後將盡快與您聯繫。
                 </p>
               </>
@@ -407,11 +409,11 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           </div>
 
           {/* 運費說明 */}
-          <div className="bg-stone-950 rounded-2xl border border-white/10 p-5">
+          <div className="bg-stone-800 rounded-2xl border border-white/10 p-5 shadow-lg">
             <h4 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
               <Truck size={16} className="text-amber-400" /> 黑貓冷凍宅配運費
             </h4>
-            <ul className="space-y-1.5 text-xs text-stone-400">
+            <ul className="space-y-1.5 text-xs text-stone-300">
               {SHIPPING_TIERS.map((t) => (
                 <li key={t.label} className="flex justify-between gap-3">
                   <span>{t.label}</span>
@@ -433,7 +435,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           aria-modal="true"
           aria-labelledby="order-confirm-title"
         >
-          <div className="bg-stone-900 rounded-3xl border border-amber-500/30 shadow-2xl w-full max-w-lg my-8">
+          <div className="bg-stone-800 rounded-3xl border border-amber-500/40 shadow-2xl w-full max-w-lg my-8">
             {step === 'error' ? (
               <div className="p-7 sm:p-8 text-center">
                 <div className="w-16 h-16 rounded-full bg-red-500/15 text-red-400 flex items-center justify-center mx-auto mb-4 border border-red-500/30">
@@ -452,7 +454,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                     再試一次
                   </button>
                   <a href={FALLBACK_FORM_URL} target="_blank" rel="noopener noreferrer"
-                    className="flex-1 py-3 bg-stone-800 hover:bg-stone-700 text-stone-100 font-bold rounded-xl transition-colors flex items-center justify-center gap-2">
+                    className="flex-1 py-3 bg-stone-700 hover:bg-stone-600 text-stone-100 font-bold rounded-xl transition-colors flex items-center justify-center gap-2">
                     改用備援訂購單 <ExternalLink size={15} />
                   </a>
                 </div>
@@ -499,7 +501,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                     </div>
                   </div>
 
-                  <dl className="bg-stone-950 rounded-xl p-4 space-y-2 text-stone-300 border border-white/5">
+                  <dl className="bg-stone-900 rounded-xl p-4 space-y-2 text-stone-300 border border-white/10">
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">姓名</dt><dd>{name}</dd></div>
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">電話</dt><dd>{phone}</dd></div>
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">地址</dt><dd className="break-words">{address}</dd></div>
@@ -510,7 +512,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
 
                 <div className="px-6 sm:px-7 pb-6 flex flex-col sm:flex-row gap-3">
                   <button onClick={() => setStep('form')} disabled={step === 'sending'}
-                    className="sm:w-auto px-6 py-3.5 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold rounded-xl transition-colors disabled:opacity-40">
+                    className="sm:w-auto px-6 py-3.5 bg-stone-700 hover:bg-stone-600 text-stone-200 font-bold rounded-xl transition-colors disabled:opacity-40">
                     返回修改
                   </button>
                   <button onClick={handleSubmit} disabled={step === 'sending'}
