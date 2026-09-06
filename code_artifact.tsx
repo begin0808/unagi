@@ -210,8 +210,8 @@ const App = () => {
           </h1>
           
           <p className="text-stone-300 text-base sm:text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed [text-wrap:balance]">
-            <span className="inline-block">油脂豐潤、肉質細緻。</span>
-            <span className="inline-block">微波 <span className="whitespace-nowrap">3~5 分鐘</span>，即刻享用道地日式料亭級美味「蒲燒鰻魚飯」。</span>
+            <span className="inline-block">油脂豐潤、肉質細緻</span>
+            <span className="inline-block">微波 <span className="whitespace-nowrap">3~5 分鐘</span>，即刻享用道地日式料亭級美味「蒲燒鰻魚飯」</span>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
