@@ -38,9 +38,9 @@ const PRODUCTS = [
     price: 1000,
     originalPrice: 1200,
     spec: "每包 1 公斤 (約 5 尾，單片約 200g)",
-    description: "肉質細膩柔嫩、入口即化，魚刺極少，最為溫和順口！",
-    detail: "【刺少極嫩】怕細刺、長輩與孩童享用的最佳安心首選。",
-    tag: "極致軟嫩・細刺極少",
+    description: "肉質細膩柔嫩、入口即化，口感最為溫和順口！",
+    detail: "【極致軟嫩】肉質細膩柔滑、入口即化，長輩與孩童享用的最佳安心首選。",
+    tag: "極致軟嫩・細膩順口",
     tagColor: "bg-emerald-600"
   }
 ];
@@ -49,11 +49,11 @@ const PRODUCTS = [
 const FAQS = [
   {
     question: "何謂外銷日本等級的「青口鰻」？有什麼特別之處？",
-    answer: "「青口鰻」是鰻魚中的頂級極品，背部呈現青綠色光澤，肉質特別細緻軟嫩、油脂豐潤且細刺極少。長年專供日本頂級鰻魚料亭外銷，過去在臺灣市場極難買到，是饕客心中的夢幻逸品。"
+    answer: "「青口鰻」是鰻魚中的頂級極品，背部呈現青綠色光澤，肉質特別細緻軟嫩、油脂豐潤。長年專供日本頂級鰻魚料亭外銷，過去在臺灣市場極難買到，是老饕心中的夢幻逸品。"
   },
   {
     question: "運費與宅配方式如何計算？大約幾天送達？",
-    answer: "我們一律使用「黑貓低溫冷凍宅配」全程保鮮直送：\n• 2 公斤以下：運費 $225\n• 3～4 公斤：運費 $290\n• 5 公斤以上：🎉 全台免運費！\n確認訂單與款項後約 1～3 個工作天出貨。中秋等節慶檔期物流較繁忙，建議提早預訂以確保如期到貨。"
+    answer: "我們一律使用「黑貓低溫冷凍宅配」全程保鮮直送：\n• 2 公斤以下：運費 $225\n• 3～4 公斤：運費 $290\n• 5 公斤以上：🎉 全臺免運費！\n確認訂單與款項後約 1～3 個工作天出貨。中秋等節慶檔期物流較繁忙，建議提早預訂以確保如期到貨。"
   },
   {
     question: "保存方式為何？未開封可以冷凍保存多久？",
@@ -202,14 +202,16 @@ const App = () => {
           
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-white mb-6 tracking-wider leading-tight">
             【興旺】頂級蒲燒鰻<br/>
-            <span className="bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 bg-clip-text text-transparent text-3xl sm:text-5xl md:text-6xl">
-              外銷日本極品・誠摯推薦給臺灣鄉親
+            <span className="bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 bg-clip-text text-transparent text-2xl sm:text-4xl md:text-5xl inline-block mt-3 font-bold">
+              <span className="inline-block">外銷極品</span>
+              <span className="hidden sm:inline">・</span>
+              <span className="inline-block">回饋臺灣鄉親朋友</span>
             </span>
           </h1>
           
-          <p className="text-stone-300 text-base sm:text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-            油脂豐潤、肉質細緻。微波 3~5 分鐘，即刻享用道地日式料亭級美味「蒲燒鰻魚飯」。<br className="hidden sm:inline" />
-            今年除了穩定外銷日本，更特別將這份外銷料亭級極品，誠摯推薦給臺灣喜愛鰻魚的鄉親朋友！
+          <p className="text-stone-300 text-base sm:text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed [text-wrap:balance]">
+            <span className="inline-block">油脂豐潤、肉質細緻。</span>
+            <span className="inline-block">微波 <span className="whitespace-nowrap">3~5 分鐘</span>，即刻享用道地日式料亭級美味「蒲燒鰻魚飯」。</span>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -245,13 +247,14 @@ const App = () => {
               <span className="animate-pulse">🥮</span> 中秋特別企劃・伴手禮與烤肉極品
             </div>
             
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight">
-              中秋賞月烤肉少不了這一道！<br/>
-              <span className="text-amber-400">日式料亭級「頂級青口蒲燒鰻」</span>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight [text-wrap:balance]">
+              <span className="inline-block">中秋賞月烤肉少不了這一道！</span><br className="hidden sm:inline" />
+              <span className="text-amber-400 inline-block">日式料亭級「頂級青口蒲燒鰻」</span>
             </h2>
             
-            <p className="text-lg md:text-xl text-stone-300 max-w-3xl mx-auto leading-relaxed">
-              趁中秋前下單，烤肉架上香氣逼人、秒殺全場！送禮更大氣體面，讓親友品嚐真正外銷日本的尊貴極品。
+            <p className="text-base sm:text-lg md:text-xl text-stone-300 max-w-2xl mx-auto leading-relaxed [text-wrap:balance]">
+              <span className="inline-block">趁中秋前搶鮮下單，烤肉架上香氣逼人、秒殺全場！</span>
+              <span className="inline-block">送禮體面大器，與親友共享外銷日本的尊貴美味。</span>
             </p>
           </div>
 
@@ -260,10 +263,12 @@ const App = () => {
                <div className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-lg shadow">
                  超值回饋價
                </div>
-               <h3 className="text-xl md:text-2xl font-bold text-amber-300 mb-2">
-                 🎏 頂級外銷日本青口鰻・推薦給臺灣喜愛鰻魚的鄉親朋友
+               <h3 className="text-xl md:text-2xl font-bold text-amber-300 mb-2 [text-wrap:balance]">
+                 <span className="inline-block">🎏 頂級外銷日本青口鰻</span>
+                 <span className="hidden sm:inline">・</span>
+                 <span className="inline-block">產地回饋特惠</span>
                </h3>
-               <p className="text-stone-300 text-sm md:text-base mb-6">往年外銷日本一尾難求的高檔滋味，今年用最實在的產地價格，推薦給臺灣喜愛鰻魚的朋友！</p>
+               <p className="text-stone-300 text-sm md:text-base mb-6 max-w-xl mx-auto [text-wrap:balance]">往年外銷日本一尾難求的高檔滋味，今年以產地實在價格，回饋給臺灣喜愛鰻魚的鄉親朋友！</p>
                
                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
                   <span className="text-stone-400 line-through text-lg sm:text-xl">市售/原價 $1,200/kg</span>
@@ -291,7 +296,7 @@ const App = () => {
                 <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mb-3">
                   <Flame size={24} />
                 </div>
-                <h4 className="text-lg font-bold text-white mb-1">3~5 分鐘快速上桌</h4>
+                <h4 className="text-lg font-bold text-white mb-1"><span className="whitespace-nowrap">3~5 分鐘</span>快速上桌</h4>
                 <p className="text-stone-400 text-sm leading-relaxed">
                   獨門蒲燒醬汁已完美調味！微波、烤箱、氣炸或隔水加熱，美味即刻呈現。
                 </p>
@@ -303,7 +308,7 @@ const App = () => {
                 </div>
                 <h4 className="text-lg font-bold text-white mb-1">黑貓冷凍宅配・滿額免運</h4>
                 <p className="text-stone-400 text-sm leading-relaxed">
-                  真空鎖鮮低溫直送！滿 5 公斤即享全台免運費，揪團合購最划算。
+                  真空鎖鮮低溫直送！滿 5 公斤即享全臺免運費，揪團合購最划算。
                 </p>
               </div>
             </div>
@@ -330,9 +335,9 @@ const App = () => {
               <div className="inline-block border-b-2 border-amber-500 pb-1">
                 <span className="text-amber-500 font-bold tracking-widest uppercase text-sm">BRAND STORY・產地職人</span>
               </div>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-snug">
-                彰化福興深耕數十年，<br/>
-                <span className="text-amber-400">日本名店社長親赴魚塭實勘認證</span>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-snug [text-wrap:balance]">
+                <span className="inline-block">彰化福興深耕數十年，</span>
+                <span className="text-amber-400 inline-block">日本名店社長親赴魚塭實勘認證</span>
               </h2>
               <div className="text-stone-300 text-base sm:text-lg leading-relaxed space-y-4">
                 <p>
@@ -342,7 +347,7 @@ const App = () => {
                   我們以深海魚粉與純淨水質精細飼育，培育出的青口鰻背青腹白、油脂豐厚、肉質細膩柔滑。2025 年底，日本權威水產月刊《ACR》偕同全日本鰻魚料理界泰斗——福岡小倉百年名店<strong className="text-white">「田舎庵」緒方大社長</strong>、長野<strong className="text-white">「観光荘」宮澤健社長</strong>與臺灣鰻蝦同業公會<strong className="text-white">郭瓊英理事長</strong>，專程實地走訪<strong>福興鄉吳奇清養鰻場</strong>魚塭池畔深入考察，給予最高讚賞！
                 </p>
                 <p>
-                  過去，這樣受日本名店青睞的頂級極品幾乎第一時間空運外銷；今年我們除了持續外銷日本，也決定將這份長年代表臺灣驕傲的外銷頂級極品，<strong className="text-amber-300">誠摯推薦給臺灣喜愛鰻魚的鄉親朋友！</strong>
+                  過去受日本名店青睞的頂級極品幾乎第一時間空運外銷；今年我們除了持續穩定外銷日本，也特別保留外銷料亭極品，<strong className="text-amber-300">誠摯推薦給臺灣喜愛鰻魚的鄉親朋友共同品嚐！</strong>
                 </p>
               </div>
               
@@ -421,16 +426,20 @@ const App = () => {
             <div className="inline-block bg-amber-600/20 text-amber-300 px-4 py-1 rounded-full text-sm font-bold mb-3 border border-amber-500/30">
               嚴選規格・均一特惠
             </div>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4">三種規格・滿足不同挑剔味蕾</h2>
-            <p className="text-stone-400 max-w-2xl mx-auto text-base sm:text-lg">
-              每種規格每包均為 <strong className="text-white">一公斤裝</strong>，均一超值特惠價 <strong className="text-amber-400 font-bold">$1,000 元/kg</strong>。<br/>
-              蒲燒醬汁已完美調味，冷凍真空包裝，效期長達兩年。
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 [text-wrap:balance]">三種規格・滿足不同挑剔味蕾</h2>
+            <p className="text-stone-400 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed [text-wrap:balance]">
+              <span className="inline-block">每種規格每包均為 <strong className="text-white">一公斤裝</strong>，均一超值特惠價 <strong className="text-amber-400 font-bold whitespace-nowrap">$1,000 元/kg</strong>。</span>
+              <span className="inline-block">蒲燒醬汁已完美調味，冷凍真空包裝，效期長達兩年。</span>
             </p>
             
             {/* 口感挑選指引 Banner */}
             <div className="mt-6 max-w-2xl mx-auto bg-stone-900 p-4 rounded-xl border border-amber-500/30 text-stone-200 text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-2 shadow-lg">
                <span className="bg-amber-500 text-stone-950 font-bold text-xs px-2.5 py-1 rounded-md">挑選指南</span>
-               <span><strong className="text-amber-400">越少條魚越大</strong>（肉厚Ｑ彈大口滿足） ⇄ <strong className="text-amber-400">越多條魚越小</strong>（肉質軟嫩極細刺）</span>
+               <span className="[text-wrap:balance]">
+                 <span className="inline-block"><strong className="text-amber-400">越少條魚越大</strong>（肉厚Ｑ彈大口滿足）</span>
+                 <span className="inline-block px-1">⇄</span>
+                 <span className="inline-block"><strong className="text-amber-400">越多條魚越小</strong>（肉質軟嫩細膩順口）</span>
+               </span>
             </div>
           </div>
 
@@ -526,9 +535,12 @@ const App = () => {
             <div className="inline-block bg-amber-600/20 text-amber-300 px-4 py-1 rounded-full text-sm font-bold mb-3 border border-amber-500/30">
               美味輕鬆享用
             </div>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4">3~5 分鐘料亭美味上桌</h2>
-            <p className="text-stone-400 text-base sm:text-lg max-w-2xl mx-auto">
-              蒲燒醬汁早已完美入味，無需繁複料理程序，任選以下方式加熱即可還原炭烤極致風味！
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 [text-wrap:balance]">
+              <span className="whitespace-nowrap">3~5 分鐘</span>料亭美味上桌
+            </h2>
+            <p className="text-stone-400 text-base sm:text-lg max-w-xl mx-auto [text-wrap:balance] leading-relaxed">
+              <span className="inline-block">蒲燒醬汁已完美入味，無需繁複料理程序，</span>
+              <span className="inline-block">任選以下方式加熱，即可還原炭烤極致風味！</span>
             </p>
           </div>
 
@@ -539,7 +551,7 @@ const App = () => {
                  <Utensils size={32} />
                </div>
                <h3 className="text-white font-bold text-lg mb-2">微波加熱（最推薦）</h3>
-               <p className="text-amber-400 text-xs font-bold mb-2">退冰・需拆袋・3 ~ 5 分鐘</p>
+               <p className="text-amber-400 text-xs font-bold mb-2 [text-wrap:balance]">退冰・需拆袋・<span className="whitespace-nowrap">3~5 分鐘</span></p>
                <p className="text-stone-400 text-xs leading-relaxed">
                  拆開真空袋將鰻魚置於盤中微波，醬汁熱氣騰騰，鋪在熱白飯上就是頂級鰻魚飯！
                </p>
@@ -551,7 +563,7 @@ const App = () => {
                  <Flame size={32} />
                </div>
                <h3 className="text-white font-bold text-lg mb-2">中秋炭烤 / 烤箱</h3>
-               <p className="text-red-400 text-xs font-bold mb-2">微退冰・需拆袋・5 ~ 10 分鐘</p>
+               <p className="text-red-400 text-xs font-bold mb-2 [text-wrap:balance]">微退冰・需拆袋・<span className="whitespace-nowrap">5~10 分鐘</span></p>
                <p className="text-stone-400 text-xs leading-relaxed">
                  置於烤肉網或烤箱慢火覆熱，逼出豐厚油脂與炭香，外皮微焦香脆、香氣四溢！
                </p>
@@ -563,7 +575,7 @@ const App = () => {
                  <Clock size={32} />
                </div>
                <h3 className="text-white font-bold text-lg mb-2">氣炸鍋加熱</h3>
-               <p className="text-amber-400 text-xs font-bold mb-2">退冰・需拆袋・160度 6~8 分鐘</p>
+               <p className="text-amber-400 text-xs font-bold mb-2 [text-wrap:balance]">退冰・需拆袋・<span className="whitespace-nowrap">160°C 6~8 分鐘</span></p>
                <p className="text-stone-400 text-xs leading-relaxed">
                  以氣炸鍋 160°C 烘烤約 6~8 分鐘，鎖住肉汁同時增添表皮酥香口感。
                </p>
@@ -575,7 +587,7 @@ const App = () => {
                  <CheckCircle size={32} />
                </div>
                <h3 className="text-white font-bold text-lg mb-2">隔水水煮加熱</h3>
-               <p className="text-green-400 text-xs font-bold mb-2">無需退冰・不拆袋・滾水 3~5 分鐘</p>
+               <p className="text-green-400 text-xs font-bold mb-2 [text-wrap:balance]">無需退冰・不拆袋・<span className="whitespace-nowrap">滾水 3~5 分鐘</span></p>
                <p className="text-stone-400 text-xs leading-relaxed">
                  真空包直接放入沸水浸煮加熱 3~5 分鐘，完整保留原汁原味，最方便多汁。
                </p>
@@ -650,7 +662,7 @@ const App = () => {
                    <li className="flex justify-between items-center pt-1 bg-green-950/30 p-2.5 rounded-lg border border-green-500/30">
                       <span className="font-bold text-white">5 公斤以上 (5包以上)</span>
                       <span className="bg-green-600 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full shadow">
-                        🎉 全台免運費！
+                        🎉 全臺免運費！
                       </span>
                    </li>
                 </ul>
@@ -683,9 +695,9 @@ const App = () => {
                   準備好品嚐頂級青口鰻了嗎？
                 </h3>
                 
-                <p className="text-stone-400 mb-8 max-w-sm text-sm sm:text-base leading-relaxed">
-                  點擊下方按鈕前往 Google 官方訂購表單。<br/>
-                  均一特惠價 <span className="text-amber-400 font-bold">$1,000 / kg</span>，數量有限售完為止！
+                <p className="text-stone-400 mb-8 max-w-sm text-sm sm:text-base leading-relaxed [text-wrap:balance]">
+                  <span className="inline-block">點擊下方按鈕前往 Google 官方訂購表單。</span>
+                  <span className="inline-block">均一特惠價 <span className="text-amber-400 font-bold whitespace-nowrap">$1,000 / kg</span>，數量有限售完為止！</span>
                 </p>
                 
                 <a 
@@ -721,7 +733,7 @@ const App = () => {
           <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-8 mb-4 text-stone-400 text-sm">
             <p className="flex items-center gap-1.5">
                <MapPin size={16} className="text-amber-500" />
-               <span>產地：臺灣彰化鹿港 / 福興（吳奇清養鰻場）</span>
+               <span className="whitespace-nowrap">產地：臺灣彰化鹿港 / 福興</span><span className="whitespace-nowrap">（吳奇清養鰻場）</span>
             </p>
             <p className="flex items-center gap-1.5">
                <Truck size={16} className="text-amber-500" />
