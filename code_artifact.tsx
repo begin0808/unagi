@@ -389,7 +389,7 @@ const App = () => {
               <div className="absolute -inset-2 bg-gradient-to-r from-amber-600/30 to-red-600/30 rounded-2xl blur-lg"></div>
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-amber-500/30 bg-stone-900">
                 <img 
-                  src="./acr_images/wu_full_magazine_original.jpg" 
+                  src="./acr_images/wu_full_magazine_original.png" 
                   alt="日本水產月刊 ACR 第10頁完整刊載：彰化縣福興鄉吳奇清養鰻場" 
                   className="w-full h-auto object-contain block mx-auto hover:scale-[1.01] transition-transform duration-300"
                 />
