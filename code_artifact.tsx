@@ -49,7 +49,7 @@ const PRODUCTS = [
 const FAQS = [
   {
     question: "何謂外銷日本等級的「青口鰻」？有什麼特別之處？",
-    answer: "「青口鰻」是鰻魚中的頂級極品，背部呈現青綠色光澤，肉質特別細緻軟嫩、油脂豐潤且細刺極少。長年專供日本頂級鰻魚料亭外銷，過去在台灣市場極難買到，是饕客心中的夢幻逸品。"
+    answer: "「青口鰻」是鰻魚中的頂級極品，背部呈現青綠色光澤，肉質特別細緻軟嫩、油脂豐潤且細刺極少。長年專供日本頂級鰻魚料亭外銷，過去在臺灣市場極難買到，是饕客心中的夢幻逸品。"
   },
   {
     question: "運費與宅配方式如何計算？大約幾天送達？",
@@ -203,13 +203,13 @@ const App = () => {
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-white mb-6 tracking-wider leading-tight">
             【興旺】頂級蒲燒鰻<br/>
             <span className="bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 bg-clip-text text-transparent text-3xl sm:text-5xl md:text-6xl">
-              外銷極品・回饋台灣自家人
+              外銷日本極品・誠摯推薦給臺灣鄉親
             </span>
           </h1>
           
           <p className="text-stone-300 text-base sm:text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
             油脂豐潤、肉質細緻。微波 3~5 分鐘，即刻享用道地日式料亭級美味「蒲燒鰻魚飯」。<br className="hidden sm:inline" />
-            今年特別將過去外銷日本的珍貴極品，完整留給台灣鄉親！
+            今年除了穩定外銷日本，更特別將這份外銷料亭級極品，誠摯推薦給臺灣喜愛鰻魚的鄉親朋友！
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -261,9 +261,9 @@ const App = () => {
                  超值回饋價
                </div>
                <h3 className="text-xl md:text-2xl font-bold text-amber-300 mb-2">
-                 🎏 頂級外銷日本青口鰻・感恩回饋台灣鄉親
+                 🎏 頂級外銷日本青口鰻・推薦給臺灣喜愛鰻魚的鄉親朋友
                </h3>
-               <p className="text-stone-300 text-sm md:text-base mb-6">往年外銷日本一尾難求的高檔滋味，今年用最實在的產地價格回饋自家人！</p>
+               <p className="text-stone-300 text-sm md:text-base mb-6">往年外銷日本一尾難求的高檔滋味，今年用最實在的產地價格，推薦給臺灣喜愛鰻魚的朋友！</p>
                
                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
                   <span className="text-stone-400 line-through text-lg sm:text-xl">市售/原價 $1,200/kg</span>
@@ -339,10 +339,10 @@ const App = () => {
                   <strong className="text-white">【興旺蒲燒鰻】</strong>源自彰化縣福興鄉<strong className="text-amber-400">「吳奇清養鰻場」</strong>，長年專注於培育外銷日本頂級料亭的最高品質——<strong className="text-amber-400">「青口鰻」</strong>。
                 </p>
                 <p>
-                  我們以深海魚粉與純淨水質精細飼育，培育出的青口鰻背青腹白、油脂豐厚、肉質細膩柔滑。2025 年底，日本權威水產月刊《ACR》偕同全日本鰻魚料理界泰斗——福岡小倉百年名店<strong className="text-white">「田舎庵」緒方大社長</strong>、長野<strong className="text-white">「観光荘」宮澤健社長</strong>與台灣鰻蝦同業公會<strong className="text-white">郭瓊英理事長</strong>，專程實地走訪<strong>福興鄉吳奇清養鰻場</strong>魚塭池畔深入考察，給予最高讚賞！
+                  我們以深海魚粉與純淨水質精細飼育，培育出的青口鰻背青腹白、油脂豐厚、肉質細膩柔滑。2025 年底，日本權威水產月刊《ACR》偕同全日本鰻魚料理界泰斗——福岡小倉百年名店<strong className="text-white">「田舎庵」緒方大社長</strong>、長野<strong className="text-white">「観光荘」宮澤健社長</strong>與臺灣鰻蝦同業公會<strong className="text-white">郭瓊英理事長</strong>，專程實地走訪<strong>福興鄉吳奇清養鰻場</strong>魚塭池畔深入考察，給予最高讚賞！
                 </p>
                 <p>
-                  過去，這樣受日本名店青睞的頂級極品幾乎第一時間空運外銷；今年我們決定將這份長年代表台灣驕傲的外銷頂級極品，<strong className="text-amber-300">完整留給台灣自家人！</strong>
+                  過去，這樣受日本名店青睞的頂級極品幾乎第一時間空運外銷；今年我們除了持續外銷日本，也決定將這份長年代表臺灣驕傲的外銷頂級極品，<strong className="text-amber-300">誠摯推薦給臺灣喜愛鰻魚的鄉親朋友！</strong>
                 </p>
               </div>
               
@@ -379,22 +379,33 @@ const App = () => {
               </div>
             </div>
             
-            {/* Brand Story Image - Authentic Photo from ACR Report */}
+            {/* Brand Story Image - Full Authentic Layout from ACR Report */}
             <div className="relative">
               <div className="absolute -inset-2 bg-gradient-to-r from-amber-600/30 to-red-600/30 rounded-2xl blur-lg"></div>
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-amber-500/30 bg-stone-900">
                 <img 
-                  src="./acr_images/wu_group_photo.jpg" 
-                  alt="吳奇清養鰻場與日本名店訪查團合影" 
-                  className="w-full h-auto object-cover"
+                  src="./acr_images/wu_full_magazine_original.jpg" 
+                  alt="日本水產月刊 ACR 第10頁完整刊載：彰化縣福興鄉吳奇清養鰻場" 
+                  className="w-full h-auto object-contain block mx-auto hover:scale-[1.01] transition-transform duration-300"
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-stone-950 via-stone-950/90 to-transparent p-5">
-                  <span className="bg-amber-500 text-stone-950 text-xs font-extrabold px-2.5 py-0.5 rounded mb-1.5 inline-block">
-                    日本《ACR》月刊刊載實景
-                  </span>
-                  <p className="text-white font-bold text-base sm:text-lg">彰化福興 吳奇清養鰻場池畔</p>
-                  <p className="text-stone-300 text-xs sm:text-sm leading-relaxed">
-                    吳奇清先生、吳夫人與日本「田舎庵」緒方社長、鰻蝦公會郭理事長於魚塭合影
+                <div className="p-4 bg-stone-950/95 border-t border-stone-800">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="bg-amber-500 text-stone-950 text-xs font-extrabold px-2.5 py-0.5 rounded">
+                      日本《ACR》月刊刊載原貌・零裁切
+                    </span>
+                    <a 
+                      href="./ACR.html#wu-special" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-amber-400 hover:text-amber-300 text-xs font-bold flex items-center gap-1 group"
+                    >
+                      <span>點擊查看報導全譯</span>
+                      <ExternalLink size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                    </a>
+                  </div>
+                  <p className="text-white font-bold text-sm sm:text-base">彰化福興 吳奇清養鰻場現場紀行</p>
+                  <p className="text-stone-400 text-xs leading-relaxed mt-0.5">
+                    日本料理教父「田舎庵」緒方大社長親赴魚塭實勘，包含高標水質巡檢、深海魚粉投飼與池畔大合影
                   </p>
                 </div>
               </div>
@@ -710,7 +721,7 @@ const App = () => {
           <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-8 mb-4 text-stone-400 text-sm">
             <p className="flex items-center gap-1.5">
                <MapPin size={16} className="text-amber-500" />
-               <span>產地：台灣彰化鹿港 / 福興（吳奇清養鰻場）</span>
+               <span>產地：臺灣彰化鹿港 / 福興（吳奇清養鰻場）</span>
             </p>
             <p className="flex items-center gap-1.5">
                <Truck size={16} className="text-amber-500" />
