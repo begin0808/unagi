@@ -25,7 +25,16 @@ const SPREADSHEET_ID = '';
 /** 訂單要寫入的工作表名稱，不存在會自動建立 */
 const SHEET_NAME = '訂單';
 
-/** 新訂單通知信的收件者；留空字串則自動寄給本指令碼的擁有者 */
+/**
+ * 新訂單通知信的收件者。留空字串則自動寄給本指令碼的擁有者。
+ *
+ * 要寄給多個人時，用「逗號」分隔即可，例如：
+ *   const NOTIFY_EMAIL = 'begin0808@gmail.com, someone@gmail.com';
+ *
+ * 注意：Gmail 免費帳號每天的寄信收件人上限約 100 位。
+ * 每筆訂單會寄給「顧客 1 位 + 這裡列的每一位」，
+ * 例如這裡填 2 個人，一筆訂單就用掉 3 個額度。
+ */
 const NOTIFY_EMAIL = '';
 
 const SHOP_NAME = '興旺蒲燒鰻';
@@ -272,15 +281,19 @@ function notifyCustomer_(o) {
 /**
  * 在編輯器選這個函式按「執行」，可以確認試算表寫入與寄信權限都正常。
  * 執行後試算表會多一筆測試訂單，確認完請自行刪除該列。
+ *
+ * TEST_EMAIL 請填一個您收得到的信箱，用來驗證「顧客確認信」有正常寄出。
  */
+const TEST_EMAIL = 'begin0808@gmail.com';
+
 function testWrite() {
   const fake = {
     postData: {
       contents: JSON.stringify({
         name: '測試訂單',
         phone: '0912-345-678',
-        address: '彰化縣福興鄉測試路 1 號',
-        email: '',
+        address: '臺南市 710 永康區測試路 1 號',
+        email: TEST_EMAIL,
         note: '這是一筆測試訂單，確認後請刪除',
         quantities: { A: 1, B: 2, C: 0 },
         giftBoxes: 2,
