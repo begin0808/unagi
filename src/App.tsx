@@ -178,7 +178,7 @@ const App = () => {
           </h1>
           
           <p className="text-stone-300 text-base sm:text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-            油脂豐潤、肉質細緻且少刺。微波 3~5 分鐘，即刻享用道地日式料亭級美味「蒲燒鰻魚飯」。<br className="hidden sm:inline" />
+            油脂豐潤、肉質細緻。微波 3~5 分鐘，即刻享用道地日式料亭級美味「蒲燒鰻魚飯」。<br className="hidden sm:inline" />
             今年特別將過去外銷日本的珍貴極品，完整留給台灣鄉親！
           </p>
 
@@ -253,7 +253,7 @@ const App = () => {
                 </div>
                 <h4 className="text-lg font-bold text-white mb-1">外銷頂級青口鰻</h4>
                 <p className="text-stone-400 text-sm leading-relaxed">
-                  青背白腹、肉質細膩柔滑，油脂豐潤且刺少，日本料亭專用最高等級。
+                  青背白腹、肉質細膩柔滑，油脂豐潤，日本料亭專用最高等級。
                 </p>
               </div>
 
