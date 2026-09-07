@@ -42,6 +42,11 @@ npm run preview  # 預覽建置結果
 - 後端：`gas/Code.gs`、`gas/appsscript.json`
 - **設定與部署步驟：[`docs/訂購系統設定說明.md`](docs/訂購系統設定說明.md)**
 
+### 優惠碼
+
+優惠碼只存在 `gas/Code.gs` 的 `PROMO_CODES`，**不可以寫進網站程式碼**——網頁原始碼是公開的。
+折扣規則（商品金額每滿 1,000 折 50）前後端各有一份，改動時兩邊都要改。
+
 Apps Script 的部署網址寫在 `OrderForm.tsx` 的 `DEFAULT_ORDER_API_URL`，
 也可用環境變數 `VITE_ORDER_API_URL` 覆蓋（見 `.env.example`）。
 

@@ -21,6 +21,22 @@ export const ORIGINAL_PRICE_PER_KG = 1200;
 /** 送禮禮盒單價，每個可裝 3~4 片 */
 export const GIFT_BOX_PRICE = 50;
 
+/**
+ * 優惠碼折扣：以「商品金額」每滿 DISCOUNT_STEP_AMOUNT 元，折 DISCOUNT_STEP_VALUE 元，
+ * 不足一階的零頭不計，不設上限。禮盒與運費不納入計算基準。
+ *
+ * ⚠️ 優惠碼本身「不在」這個檔案裡，也不在任何前端程式碼裡。
+ * 網頁的程式碼所有人都看得到，優惠碼若寫在前端等於公開。
+ * 實際的碼只存在 gas/Code.gs 的 PROMO_CODES，由後端驗證。
+ */
+export const DISCOUNT_STEP_AMOUNT = 1000;
+export const DISCOUNT_STEP_VALUE = 50;
+
+export function promoDiscount(itemsTotal: number): number {
+  if (itemsTotal <= 0) return 0;
+  return Math.floor(itemsTotal / DISCOUNT_STEP_AMOUNT) * DISCOUNT_STEP_VALUE;
+}
+
 /** 達到此包數即免運費 */
 export const FREE_SHIPPING_PACKS = 5;
 
@@ -136,25 +152,32 @@ export interface OrderTotals {
   itemsTotal: number;
   giftTotal: number;
   shipping: number;
+  discount: number;
   total: number;
   /** 還差幾包才免運，0 代表已免運或尚未選購 */
   packsToFreeShipping: number;
 }
 
-export function calcOrder(quantities: Quantities, giftBoxes: number): OrderTotals {
+export function calcOrder(
+  quantities: Quantities,
+  giftBoxes: number,
+  promoApplied = false,
+): OrderTotals {
   const packs = PRODUCTS.reduce((sum, p) => sum + Math.max(0, quantities[p.id] || 0), 0);
   const boxes = Math.max(0, giftBoxes || 0);
 
   const itemsTotal = packs * PRICE_PER_KG;
   const giftTotal = boxes * GIFT_BOX_PRICE;
   const shipping = shippingFee(packs);
+  const discount = promoApplied ? promoDiscount(itemsTotal) : 0;
 
   return {
     packs,
     itemsTotal,
     giftTotal,
     shipping,
-    total: itemsTotal + giftTotal + shipping,
+    discount,
+    total: itemsTotal + giftTotal + shipping - discount,
     packsToFreeShipping:
       packs > 0 && packs < FREE_SHIPPING_PACKS ? FREE_SHIPPING_PACKS - packs : 0,
   };

@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import {
   Minus, Plus, Gift, Truck, ShoppingBag, CheckCircle2, AlertTriangle,
-  Loader2, X, ExternalLink, ClipboardList,
+  Loader2, X, ExternalLink, ClipboardList, Ticket, CheckCircle,
 } from 'lucide-react';
 import {
   SPECS, PRICE_PER_KG, GIFT_BOX_PRICE, SHIPPING_TIERS, FREE_SHIPPING_PACKS,
-  calcOrder, currency, type Quantities, type SpecId,
+  calcOrder, currency, DISCOUNT_STEP_AMOUNT, DISCOUNT_STEP_VALUE,
+  type Quantities, type SpecId,
 } from '../lib/pricing';
 
 /**
@@ -25,6 +26,7 @@ const FALLBACK_FORM_URL =
   'https://docs.google.com/forms/d/1W9iyrVFahsreK_HU9wabdsL2WUhg054upirHDNxqVBA/viewform';
 
 type Step = 'form' | 'confirm' | 'sending' | 'done' | 'error';
+type PromoState = 'idle' | 'checking' | 'ok' | 'bad';
 
 interface Props {
   quantities: Quantities;
@@ -116,13 +118,57 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   const [orderNo, setOrderNo] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const totals = useMemo(() => calcOrder(quantities, giftBoxes), [quantities, giftBoxes]);
+  // 優惠碼：輸入框內容與「已成功套用」的碼分開存，
+  // 客人改動輸入框時要立刻取消已套用狀態，避免看到與實際不符的金額。
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedCode, setAppliedCode] = useState('');
+  const [promoState, setPromoState] = useState<PromoState>('idle');
+
+  const totals = useMemo(
+    () => calcOrder(quantities, giftBoxes, Boolean(appliedCode)),
+    [quantities, giftBoxes, appliedCode],
+  );
 
   /**
    * 還沒設定 Apps Script 網址時（例如剛部署、環境變數尚未填），
    * 不讓顧客白填一輪再失敗：改為只保留金額試算，並導向備援訂購單。
    */
   const configured = Boolean(ORDER_API_URL);
+
+  /**
+   * 優惠碼一律送到後端驗證。
+   * 碼本身不能放在前端，網頁程式碼是公開的，寫在這裡等於直接送給所有人。
+   */
+  const verifyPromo = async () => {
+    const code = promoInput.trim();
+    if (!code) return;
+    setPromoState('checking');
+    try {
+      const res = await fetch(ORDER_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'verifyPromo', code }),
+      });
+      const data = await res.json();
+      if (data && data.ok && data.valid) {
+        setAppliedCode(code);
+        setPromoState('ok');
+      } else {
+        setAppliedCode('');
+        setPromoState('bad');
+      }
+    } catch {
+      setAppliedCode('');
+      setPromoState('bad');
+    }
+  };
+
+  const onPromoInputChange = (v: string) => {
+    setPromoInput(v);
+    if (appliedCode || promoState !== 'idle') {
+      setAppliedCode('');
+      setPromoState('idle');
+    }
+  };
 
   const setQty = (id: SpecId, n: number) =>
     setQuantities((prev) => ({ ...prev, [id]: n }));
@@ -167,6 +213,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           note: note.trim(),
           quantities,
           giftBoxes,
+          promoCode: appliedCode,
           company, // honeypot
         }),
       });
@@ -187,6 +234,9 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setGiftBoxes(0);
     setName(''); setPhone(''); setAddress(''); setEmail(''); setNote('');
     setErrors({});
+    setPromoInput('');
+    setAppliedCode('');
+    setPromoState('idle');
     setStep('form');
   };
 
@@ -281,6 +331,53 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           </div>
         </div>
 
+        {/* 優惠碼 */}
+        <div className={`bg-stone-800 rounded-2xl border border-white/10 p-5 sm:p-6 shadow-lg ${configured ? '' : 'hidden'}`}>
+          <h3 className="text-white font-bold text-lg mb-1 flex items-center gap-2">
+            <Ticket size={20} className="text-amber-400" /> 優惠碼
+          </h3>
+          <p className="text-stone-400 text-xs mb-4">
+            商品金額每滿 {currency(DISCOUNT_STEP_AMOUNT)} 折抵 {currency(DISCOUNT_STEP_VALUE)}。沒有優惠碼可直接略過。
+          </p>
+
+          <div className="flex gap-2">
+            <input
+              id="of-promo"
+              aria-label="優惠碼"
+              className={`${inputClass} flex-1 tracking-wider`}
+              value={promoInput}
+              onChange={(e) => onPromoInputChange(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); verifyPromo(); } }}
+              placeholder="輸入優惠碼"
+              autoComplete="off"
+            />
+            <button
+              type="button"
+              onClick={verifyPromo}
+              disabled={!promoInput.trim() || promoState === 'checking' || promoState === 'ok'}
+              className="px-6 bg-stone-700 hover:bg-stone-600 text-stone-100 font-bold rounded-xl transition-colors disabled:opacity-40 disabled:hover:bg-stone-700 flex items-center gap-2"
+            >
+              {promoState === 'checking'
+                ? <><Loader2 size={16} className="animate-spin" /> 驗證中</>
+                : promoState === 'ok' ? '已套用' : '套用'}
+            </button>
+          </div>
+
+          {promoState === 'ok' && (
+            <p className="text-green-400 text-sm mt-3 flex items-center gap-1.5">
+              <CheckCircle size={14} />
+              {totals.discount > 0
+                ? <>優惠碼已套用，本筆折抵 <strong>{currency(totals.discount)}</strong></>
+                : <>優惠碼有效，選購商品後即可折抵</>}
+            </p>
+          )}
+          {promoState === 'bad' && (
+            <p className="text-red-400 text-sm mt-3 flex items-center gap-1.5">
+              <AlertTriangle size={14} /> 優惠碼不正確，請確認後再試一次
+            </p>
+          )}
+        </div>
+
         {/* 收件資料 */}
         <div className={`bg-stone-800 rounded-2xl border border-white/10 p-5 sm:p-6 space-y-4 shadow-lg ${configured ? '' : 'hidden'}`}>
           <h3 className="text-white font-bold text-lg mb-1">收件資料</h3>
@@ -364,6 +461,15 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                     : <span className="text-white">{currency(totals.shipping)}</span>}
                 </span>
               </div>
+
+              {totals.discount > 0 && (
+                <div className="flex justify-between items-baseline text-green-400">
+                  <span className="flex items-center gap-1.5">
+                    <Ticket size={15} /> 優惠碼折抵
+                  </span>
+                  <span className="font-bold whitespace-nowrap">−{currency(totals.discount)}</span>
+                </div>
+              )}
             </div>
 
             {totals.packsToFreeShipping > 0 && (
@@ -497,6 +603,12 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                         {totals.shipping === 0 ? <span className="text-green-400">免運費</span> : currency(totals.shipping)}
                       </span>
                     </div>
+                    {totals.discount > 0 && (
+                      <div className="flex justify-between text-green-400">
+                        <span>優惠碼折抵（{appliedCode}）</span>
+                        <span className="font-bold">−{currency(totals.discount)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-baseline pt-2.5 border-t border-amber-500/30">
                       <span className="text-white font-bold">應付總金額</span>
                       <span className="text-2xl font-extrabold text-amber-400">{currency(totals.total)}</span>
