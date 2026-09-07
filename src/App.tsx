@@ -45,7 +45,7 @@ const FAQS = [
   },
   {
     question: "退換貨政策：若收到商品有瑕疵或解凍該如何處理？",
-    answer: "生鮮冷凍食品攸關食品安全，我們出貨皆嚴格檢驗。若您收到包裹時發現外箱嚴重破損、真空袋失真空或商品解凍變質，請於收件當日立即拍照錄影並與我們聯繫（訂購專線 " + phoneListText() + "），我們將第一時間為您辦理補寄或換貨處理。"
+    answer: "生鮮冷凍食品攸關食品安全，我們出貨皆嚴格檢驗。若您收到包裹時發現外箱嚴重破損、真空袋失真空或商品解凍變質，請於收件當日立即拍照錄影並與我們聯繫，我們將第一時間為您辦理補寄或換貨處理。"
   }
 ];
 
@@ -653,38 +653,8 @@ const App = () => {
                   規格 A 為 3 條裝、B 為 4 條裝、C 為 5 條裝，每包均為 1 公斤，可自由混搭。
                   送出後會立即寄一封訂單確認信到您填寫的 Email，請務必收信核對；內容有誤直接回覆該封信告知即可。
                   我們也會由專人與您聯繫確認付款方式與出貨時間；中秋等節慶檔期物流較繁忙，建議提早下單。
+                  到貨時間、指定日期、自取或面交、大量訂購與送禮包裝，歡迎先來電洽詢（聯絡電話見頁尾）。
                 </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 max-w-3xl mx-auto bg-stone-800/70 p-5 rounded-xl border border-white/10">
-            <div className="flex items-start gap-3">
-              <div className="bg-amber-600/20 p-2 rounded-lg text-amber-400 flex-shrink-0 mt-0.5">
-                <Phone size={20} />
-              </div>
-              <div className="min-w-0">
-                <h4 className="text-white font-bold text-sm sm:text-base">想先詢問再下單？</h4>
-                <p className="text-stone-400 text-xs sm:text-sm leading-relaxed mt-1">
-                  到貨時間、指定日期、自取或面交、大量訂購與送禮包裝，都歡迎直接與我們聯繫。
-                </p>
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-3">
-                  {PHONES.map((p) => (
-                    <a
-                      key={p}
-                      href={telHref(p)}
-                      className="text-amber-300 hover:text-amber-200 font-bold tracking-wide transition-colors whitespace-nowrap"
-                    >
-                      {formatPhone(p)}
-                    </a>
-                  ))}
-                  <a
-                    href={`mailto:${CONTACT_EMAIL}`}
-                    className="text-stone-300 hover:text-amber-300 transition-colors text-sm break-all"
-                  >
-                    {CONTACT_EMAIL}
-                  </a>
-                </div>
               </div>
             </div>
           </div>
