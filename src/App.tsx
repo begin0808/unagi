@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { 
   ShoppingBag, ChevronDown, MessageCircle, MapPin, Phone, 
   Clock, CheckCircle, Award, Sparkles, Flame, Truck, 
-  Utensils, ExternalLink, HelpCircle, ChevronRight, Gift
+  Utensils, ExternalLink, HelpCircle, ChevronRight, Gift, Mail
 } from 'lucide-react';
 import OrderForm from './components/OrderForm';
 import {
   PRODUCTS, EMPTY_QUANTITIES, shippingFaqLines, PRICE_PER_KG, currency,
   type Quantities, type SpecId,
 } from './lib/pricing';
+import { PHONES, CONTACT_EMAIL, formatPhone, telHref, phoneListText } from './lib/contact';
 
 // --- 常見問題資料 (FAQ) ---
 const FAQS = [
@@ -36,8 +37,15 @@ const FAQS = [
     answer: "本品牌源自彰化縣福興鄉「吳奇清養鰻場」，深耕在地數十年，堅持以深海魚粉精細飼育頂級青口鰻。2025 年底更榮獲日本水產權威月刊《ACR》專案特載報導，日本福岡小倉百年鰻魚料理教父「田舎庵」緒方大社長、長野「観光荘」宮澤健社長親臨福興鄉魚塭考察並高度讚揚。品質完全比照外銷日本最高標準！"
   },
   {
+    question: "想先詢問或訂單有問題，要怎麼聯絡你們？",
+    answer:
+      "歡迎直接來電，訂購專線：" + phoneListText() + "\n" +
+      "Email：" + CONTACT_EMAIL + "\n" +
+      "到貨時間、指定日期、自取或面交、大量訂購與送禮包裝需求，都可以先與我們討論。"
+  },
+  {
     question: "退換貨政策：若收到商品有瑕疵或解凍該如何處理？",
-    answer: "生鮮冷凍食品攸關食品安全，我們出貨皆嚴格檢驗。若您收到包裹時發現外箱嚴重破損、真空袋失真空或商品解凍變質，請於收件當日立即拍照錄影並聯繫我們，我們將第一時間為您辦理補寄或換貨處理。"
+    answer: "生鮮冷凍食品攸關食品安全，我們出貨皆嚴格檢驗。若您收到包裹時發現外箱嚴重破損、真空袋失真空或商品解凍變質，請於收件當日立即拍照錄影並與我們聯繫（訂購專線 " + phoneListText() + "），我們將第一時間為您辦理補寄或換貨處理。"
   }
 ];
 
@@ -646,6 +654,37 @@ const App = () => {
               </div>
             </div>
           </div>
+
+          <div className="mt-4 max-w-3xl mx-auto bg-stone-800/70 p-5 rounded-xl border border-white/10">
+            <div className="flex items-start gap-3">
+              <div className="bg-amber-600/20 p-2 rounded-lg text-amber-400 flex-shrink-0 mt-0.5">
+                <Phone size={20} />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-white font-bold text-sm sm:text-base">想先詢問再下單？</h4>
+                <p className="text-stone-400 text-xs sm:text-sm leading-relaxed mt-1">
+                  到貨時間、指定日期、自取或面交、大量訂購與送禮包裝，都歡迎直接與我們聯繫。
+                </p>
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-3">
+                  {PHONES.map((p) => (
+                    <a
+                      key={p}
+                      href={telHref(p)}
+                      className="text-amber-300 hover:text-amber-200 font-bold tracking-wide transition-colors whitespace-nowrap"
+                    >
+                      {formatPhone(p)}
+                    </a>
+                  ))}
+                  <a
+                    href={`mailto:${CONTACT_EMAIL}`}
+                    className="text-stone-300 hover:text-amber-300 transition-colors text-sm break-all"
+                  >
+                    {CONTACT_EMAIL}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -657,6 +696,32 @@ const App = () => {
               興
             </div>
             <span className="font-bold text-lg tracking-wider text-white">興旺蒲燒鰻</span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-5 mb-3">
+            <span className="flex items-center gap-1.5 text-stone-400 text-sm">
+              <Phone size={16} className="text-amber-500" /> 訂購專線
+            </span>
+            <div className="flex flex-wrap justify-center gap-x-5 gap-y-1.5">
+              {PHONES.map((p) => (
+                <a
+                  key={p}
+                  href={telHref(p)}
+                  className="text-white font-bold tracking-wide hover:text-amber-400 transition-colors whitespace-nowrap"
+                >
+                  {formatPhone(p)}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-5">
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="text-stone-400 hover:text-amber-400 text-sm inline-flex items-center gap-1.5 transition-colors break-all"
+            >
+              <Mail size={15} className="text-amber-500 flex-shrink-0" /> {CONTACT_EMAIL}
+            </a>
           </div>
 
           <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-8 mb-4 text-stone-400 text-sm">

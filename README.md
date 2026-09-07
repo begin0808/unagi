@@ -50,6 +50,13 @@ npm run preview  # 預覽建置結果
 Apps Script 的部署網址寫在 `OrderForm.tsx` 的 `DEFAULT_ORDER_API_URL`，
 也可用環境變數 `VITE_ORDER_API_URL` 覆蓋（見 `.env.example`）。
 
+## 改聯絡電話或信箱
+
+改 `src/lib/contact.ts` 一個檔案即可，頁尾、訂購區與常見問題都會跟著更新。
+
+但 `index.html` 的 LocalBusiness 結構化資料（`telephone`、`email`、`contactPoint`）
+是靜態 JSON，需要另外手動改一次。
+
 ## 換網域時要一起改的地方
 
 目前站台網址寫死在幾個檔案裡，若日後綁定自訂網域，這些都要更新：
