@@ -191,7 +191,7 @@ const App = () => {
             【興旺】頂級蒲燒鰻<br/>
             <span className="bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 bg-clip-text text-transparent text-2xl sm:text-4xl md:text-5xl inline-block mt-3 font-bold">
               <span className="inline-block">外銷極品</span>
-              <span className="hidden sm:inline">・</span>
+              <span>・</span>
               <span className="inline-block">回饋臺灣鄉親朋友</span>
             </span>
           </h1>
@@ -234,7 +234,7 @@ const App = () => {
               <span className="animate-pulse">🥮</span> 中秋特別企劃・伴手禮與烤肉極品
             </div>
             
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight [text-wrap:balance]">
+            <h2 className="text-[1.375rem] sm:text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight [text-wrap:balance]">
               <span className="inline-block">中秋賞月烤肉少不了這一道！</span><br className="hidden sm:inline" />
               <span className="text-amber-400 inline-block">日式料亭級「頂級青口蒲燒鰻」</span>
             </h2>
@@ -245,12 +245,12 @@ const App = () => {
             </p>
           </div>
 
-          <div className="bg-stone-900/90 backdrop-blur-md p-8 md:p-10 rounded-3xl border border-amber-500/30 shadow-[0_0_50px_rgba(180,83,9,0.2)]">
-            <div className="bg-gradient-to-r from-amber-950/80 via-stone-900 to-red-950/80 p-6 md:p-8 rounded-2xl border border-amber-500/40 mb-8 text-center relative overflow-hidden">
+          <div className="bg-stone-900/90 backdrop-blur-md p-5 sm:p-8 md:p-10 rounded-3xl border border-amber-500/30 shadow-[0_0_50px_rgba(180,83,9,0.2)]">
+            <div className="bg-gradient-to-r from-amber-950/80 via-stone-900 to-red-950/80 p-4 sm:p-6 md:p-8 rounded-2xl border border-amber-500/40 mb-8 text-center relative overflow-hidden">
                <div className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-lg shadow">
                  超值回饋價
                </div>
-               <h3 className="text-xl md:text-2xl font-bold text-amber-300 mb-2 [text-wrap:balance]">
+               <h3 className="text-xl md:text-2xl font-bold text-amber-300 mt-5 sm:mt-0 mb-2 [text-wrap:balance]">
                  <span className="inline-block">🎏 頂級外銷日本青口鰻</span>
                  <span className="hidden sm:inline">・</span>
                  <span className="inline-block">產地回饋特惠</span>
@@ -258,11 +258,14 @@ const App = () => {
                <p className="text-stone-300 text-sm md:text-base mb-6 max-w-xl mx-auto [text-wrap:balance]">往年外銷日本一尾難求的高檔滋味，今年以產地實在價格，回饋給臺灣喜愛鰻魚的鄉親朋友！</p>
                
                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
-                  <span className="text-stone-400 line-through text-lg sm:text-xl">市售/原價 $1,200/kg</span>
-                  <div className="flex items-baseline gap-2 bg-amber-500/20 px-6 py-2 rounded-xl border border-amber-400/30">
-                    <span className="text-stone-300 font-bold text-lg">極品特惠價</span>
-                    <span className="text-4xl sm:text-5xl font-extrabold text-amber-400">$1,000</span>
-                    <span className="text-stone-200 text-lg">/ 一公斤</span>
+                  <span className="text-stone-400 line-through text-base sm:text-xl whitespace-nowrap">市售/原價 $1,200/kg</span>
+                  <div className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1 bg-amber-500/20 px-4 sm:px-6 py-2.5 rounded-xl border border-amber-400/30">
+                    <span className="text-stone-300 font-bold text-base sm:text-lg whitespace-nowrap">極品特惠價</span>
+                    {/* 價格與單位綁在一起，換行時不會讓「/ 一公斤」單獨落在下一行開頭 */}
+                    <span className="whitespace-nowrap">
+                      <span className="text-3xl sm:text-5xl font-extrabold text-amber-400">$1,000</span>
+                      <span className="text-stone-200 text-base sm:text-lg ml-1.5">/ 一公斤</span>
+                    </span>
                   </div>
                </div>
             </div>
@@ -303,7 +306,7 @@ const App = () => {
             <div className="text-center">
               <button 
                 onClick={() => scrollToSection('contact')}
-                className="w-full sm:w-auto px-12 py-4 bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-bold text-xl rounded-xl shadow-lg hover:shadow-amber-600/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-3 mx-auto"
+                className="w-full sm:w-auto px-6 sm:px-12 py-4 bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-bold text-xl rounded-xl shadow-lg hover:shadow-amber-600/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-3 mx-auto"
               >
                 <ShoppingBag size={22} />
                 立即填單預購中秋極品

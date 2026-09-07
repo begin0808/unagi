@@ -48,7 +48,7 @@ const Stepper = ({
       aria-label={`減少${label}`}
       onClick={() => onChange(Math.max(min, value - 1))}
       disabled={value <= min}
-      className="w-9 h-9 rounded-lg flex items-center justify-center text-stone-300 hover:bg-stone-700 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+      className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-stone-300 hover:bg-stone-700 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
     >
       <Minus size={16} />
     </button>
@@ -63,14 +63,14 @@ const Stepper = ({
         const n = parseInt(e.target.value, 10);
         onChange(Number.isNaN(n) ? min : Math.min(max, Math.max(min, n)));
       }}
-      className="w-12 bg-transparent text-center text-lg font-bold text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      className="w-10 sm:w-12 bg-transparent text-center text-lg font-bold text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
     />
     <button
       type="button"
       aria-label={`增加${label}`}
       onClick={() => onChange(Math.min(max, value + 1))}
       disabled={value >= max}
-      className="w-9 h-9 rounded-lg flex items-center justify-center text-stone-300 hover:bg-amber-600 hover:text-stone-950 disabled:opacity-30 transition-colors"
+      className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-stone-300 hover:bg-amber-600 hover:text-stone-950 disabled:opacity-30 transition-colors"
     >
       <Plus size={16} />
     </button>
@@ -285,7 +285,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
             {SPECS.map((spec) => (
               <div
                 key={spec.id}
-                className={`flex items-center justify-between gap-3 p-3.5 rounded-xl border transition-colors ${
+                className={`flex items-center justify-between gap-2 sm:gap-3 p-3 sm:p-3.5 rounded-xl border transition-colors ${
                   quantities[spec.id] > 0
                     ? 'border-amber-400/60 bg-amber-500/10'
                     : 'border-white/10 bg-stone-900/60'
@@ -293,13 +293,13 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="bg-stone-800 text-amber-300 text-[11px] font-bold px-2 py-0.5 rounded">
+                    <span className="bg-stone-800 text-amber-300 text-[11px] font-bold px-2 py-0.5 rounded whitespace-nowrap flex-shrink-0">
                       規格 {spec.id}
                     </span>
-                    <span className="text-white font-bold text-sm sm:text-base truncate">{spec.name}</span>
+                    <span className="text-white font-bold text-sm sm:text-base">{spec.name}</span>
                   </div>
                   <p className="text-stone-400 text-xs mt-0.5">
-                    {spec.detail}・{spec.hint}
+                    <span className="inline-block">{spec.detail}・</span><span className="inline-block">{spec.hint}</span>
                   </p>
                 </div>
                 <Stepper
