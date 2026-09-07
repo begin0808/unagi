@@ -356,9 +356,9 @@ const App = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="text-white font-bold text-base sm:text-lg group-hover:text-amber-300 transition-colors">
-                            日本權威《ACR》專題報導全譯
+                            日本權威《ACR》專題報導
                           </h4>
-                          <span className="bg-red-700 text-white text-[10px] font-bold px-2 py-0.5 rounded">中日對照</span>
+                          <span className="bg-red-700 text-white text-[10px] font-bold px-2 py-0.5 rounded">產地紀行</span>
                         </div>
                         <p className="text-stone-400 text-xs sm:text-sm mt-0.5">
                           「田舎庵」緒方社長親訪彰化福興吳奇清養鰻場實勘紀行
@@ -396,7 +396,7 @@ const App = () => {
                       rel="noopener noreferrer" 
                       className="text-amber-400 hover:text-amber-300 text-xs font-bold flex items-center gap-1 group"
                     >
-                      <span>點擊查看報導全譯</span>
+                      <span>點擊查看報導內容</span>
                       <ExternalLink size={12} className="group-hover:translate-x-0.5 transition-transform" />
                     </a>
                   </div>
@@ -712,7 +712,7 @@ const App = () => {
                rel="noopener noreferrer" 
                className="flex items-center gap-1 text-amber-400 hover:text-amber-300 font-semibold transition-colors underline underline-offset-4"
             >
-               <span>🇯🇵 日本《ACR》專訪報導（中日對照）</span>
+               <span>🇯🇵 日本《ACR》專訪報導</span>
                <ExternalLink size={14} />
             </a>
           </div>
