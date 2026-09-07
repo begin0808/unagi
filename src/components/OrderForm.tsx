@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Minus, Plus, Gift, Truck, ShoppingBag, CheckCircle2, AlertTriangle,
-  Loader2, X, ExternalLink, ClipboardList, Ticket, CheckCircle,
+  Loader2, X, ExternalLink, ClipboardList, Ticket, CheckCircle, ChevronRight,
 } from 'lucide-react';
 import {
   SPECS, PRICE_PER_KG, GIFT_BOX_PRICE, SHIPPING_TIERS, FREE_SHIPPING_PACKS,
@@ -123,6 +123,44 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   const [promoInput, setPromoInput] = useState('');
   const [appliedCode, setAppliedCode] = useState('');
   const [promoState, setPromoState] = useState<PromoState>('idle');
+
+  /**
+   * 手機版底部浮動列：桌機的訂單摘要是固定在右側的，手機上卻排在表單最下方，
+   * 客人在上面調數量時看不到金額變化。
+   * 只在「摘要還在畫面下方、尚未捲到」時顯示；捲過去之後就交還給摘要本身，
+   * 這樣浮動列也不會擋到頁尾。
+   */
+  const summaryRef = useRef<HTMLDivElement>(null);
+  const [summaryBelow, setSummaryBelow] = useState(true);
+
+  useEffect(() => {
+    // 這裡刻意不用 IntersectionObserver：它只在「跨越邊界」時回報，
+    // 若一次捲動就從摘要上方跳到下方（錨點跳轉、跳到頁尾），中間沒有交集狀態，
+    // 觀察器不會觸發，浮動列就會卡住不消失。直接量位置才是每個捲動位置都正確。
+    let ticking = false;
+    const update = () => {
+      const el = summaryRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top;
+      setSummaryBelow(top > window.innerHeight - 80);
+    };
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { ticking = false; update(); });
+    };
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
+
+  const goToSummary = () =>
+    summaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   const totals = useMemo(
     () => calcOrder(quantities, giftBoxes, Boolean(appliedCode)),
@@ -421,7 +459,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
       {/* ---------- 右：訂單摘要 ---------- */}
       <div className="lg:col-span-5">
         <div className="lg:sticky lg:top-24 space-y-4">
-          <div className="bg-gradient-to-b from-stone-800 to-stone-900 rounded-2xl border border-amber-500/40 p-5 sm:p-6 shadow-xl">
+          <div ref={summaryRef} className="bg-gradient-to-b from-stone-800 to-stone-900 rounded-2xl border border-amber-500/40 p-5 sm:p-6 shadow-xl">
             <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
               <ShoppingBag size={20} className="text-amber-400" /> 訂單摘要
             </h3>
@@ -534,6 +572,32 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           </div>
         </div>
       </div>
+
+      {/* ---------- 手機版底部浮動列 ---------- */}
+      {configured && step === 'form' && totals.packs > 0 && summaryBelow && (
+        <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 bg-stone-900/95 backdrop-blur-md border-t border-amber-500/30 shadow-[0_-4px_24px_rgba(0,0,0,0.55)] px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-stone-400 text-[11px] leading-tight">
+                共 {totals.packs} 公斤
+                {totals.discount > 0 && (
+                  <span className="text-green-400">・已折 {currency(totals.discount)}</span>
+                )}
+              </div>
+              <div className="text-amber-400 font-extrabold text-2xl leading-tight">
+                {currency(totals.total)}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={goToSummary}
+              className="flex-shrink-0 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-extrabold rounded-xl shadow-lg transition-all flex items-center gap-1"
+            >
+              前往訂購 <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ---------- 確認 / 送出 / 失敗 對話框 ---------- */}
       {(step === 'confirm' || step === 'sending' || step === 'error') && (

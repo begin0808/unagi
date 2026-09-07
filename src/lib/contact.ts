@@ -8,7 +8,7 @@
 /** 訂購專線，依序顯示。請填純數字，顯示格式與撥號連結會自動產生 */
 export const PHONES = ['0988317218', '0931675289', '0933587743'];
 
-export const CONTACT_EMAIL = 'dggfhdryryewru568@gmail.com';
+export const CONTACT_EMAIL = 'lynnyl168168@gmail.com';
 
 /** 0988317218 → 0988-317-218 */
 export const formatPhone = (p: string): string =>
