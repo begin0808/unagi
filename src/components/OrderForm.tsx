@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import {
   SPECS, PRICE_PER_KG, GIFT_BOX_PRICE, SHIPPING_TIERS, FREE_SHIPPING_PACKS,
-  calcOrder, currency, DISCOUNT_STEP_AMOUNT, DISCOUNT_STEP_VALUE,
+  calcOrder, currency,
   type Quantities, type SpecId,
 } from '../lib/pricing';
 
@@ -371,13 +371,9 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
 
         {/* 優惠碼 */}
         <div className={`bg-stone-800 rounded-2xl border border-white/10 p-5 sm:p-6 shadow-lg ${configured ? '' : 'hidden'}`}>
-          <h3 className="text-white font-bold text-lg mb-1 flex items-center gap-2">
+          <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
             <Ticket size={20} className="text-amber-400" /> 優惠碼
           </h3>
-          <p className="text-stone-400 text-xs mb-4">
-            商品金額每滿 {currency(DISCOUNT_STEP_AMOUNT)} 折抵 {currency(DISCOUNT_STEP_VALUE)}。沒有優惠碼可直接略過。
-          </p>
-
           <div className="flex gap-2">
             <input
               id="of-promo"
