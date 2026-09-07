@@ -418,7 +418,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
             <ul className="space-y-1.5 text-xs text-stone-300">
               {SHIPPING_TIERS.map((t) => (
                 <li key={t.label} className="flex justify-between gap-3">
-                  <span>{t.label}</span>
+                  <span>{t.label}（{t.packs}）</span>
                   <span className={`font-bold whitespace-nowrap ${t.fee === 0 ? 'text-green-400' : 'text-amber-300'}`}>
                     {t.fee === 0 ? '免運費' : currency(t.fee)}
                   </span>

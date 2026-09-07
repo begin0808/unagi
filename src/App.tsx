@@ -5,47 +5,10 @@ import {
   Utensils, ExternalLink, HelpCircle, ChevronRight, Gift
 } from 'lucide-react';
 import OrderForm from './components/OrderForm';
-import { EMPTY_QUANTITIES, type Quantities, type SpecId } from './lib/pricing';
-
-// --- 產品資料 ---
-const PRODUCTS = [
-  {
-    id: 'A',
-    code: "A",
-    name: "霸氣大規格 (3條裝 / 1kg)",
-    price: 1000,
-    originalPrice: 1200,
-    spec: "每包 1 公斤 (約 3 尾，單片約 333g)",
-    description: "魚身厚實寬大、肉質紮實且口感極富 Q 彈嚼勁！",
-    detail: "【大口過癮】適合喜愛肉質厚實、豪邁大口吃肉的饕客老饕首選。",
-    tag: "厚切・Q彈紮實",
-    tagColor: "bg-amber-600"
-  },
-  {
-    id: 'B',
-    code: "B",
-    name: "經典人氣款 (4條裝 / 1kg)",
-    price: 1000,
-    originalPrice: 1200,
-    spec: "每包 1 公斤 (約 4 尾，單片約 250g)",
-    description: "油脂豐潤度與肉質達到黃金完美平衡，滑順甘甜入口生香！",
-    detail: "【中秋人氣王】烤肉架上最吸睛焦點，老饕評鑑最佳黃金比例。",
-    tag: "人氣首選・油脂平衡",
-    tagColor: "bg-red-600"
-  },
-  {
-    id: 'C',
-    code: "C",
-    name: "軟嫩珍稀款 (5條裝 / 1kg)",
-    price: 1000,
-    originalPrice: 1200,
-    spec: "每包 1 公斤 (約 5 尾，單片約 200g)",
-    description: "肉質細膩柔嫩、入口即化，口感最為溫和順口！",
-    detail: "【極致軟嫩】肉質細膩柔滑、入口即化，長輩與孩童享用的最佳安心首選。",
-    tag: "極致軟嫩・細膩順口",
-    tagColor: "bg-emerald-600"
-  }
-];
+import {
+  PRODUCTS, EMPTY_QUANTITIES, shippingFaqLines, PRICE_PER_KG, currency,
+  type Quantities, type SpecId,
+} from './lib/pricing';
 
 // --- 常見問題資料 (FAQ) ---
 const FAQS = [
@@ -55,7 +18,10 @@ const FAQS = [
   },
   {
     question: "運費與宅配方式如何計算？大約幾天送達？",
-    answer: "我們一律使用「黑貓低溫冷凍宅配」全程保鮮直送：\n• 2 公斤以下：運費 $225\n• 3～4 公斤：運費 $290\n• 5 公斤以上：🎉 全臺免運費！\n確認訂單與款項後約 1～3 個工作天出貨。中秋等節慶檔期物流較繁忙，建議提早預訂以確保如期到貨。"
+    answer:
+      "我們一律使用「黑貓低溫冷凍宅配」全程保鮮直送：\n" +
+      shippingFaqLines() +
+      "\n確認訂單與款項後約 1～3 個工作天出貨。中秋等節慶檔期物流較繁忙，建議提早預訂以確保如期到貨。"
   },
   {
     question: "保存方式為何？未開封可以冷凍保存多久？",
@@ -185,7 +151,11 @@ const App = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-stone-950/70 via-stone-950/50 to-stone-950 z-10"></div>
           <img 
             src="./images/hero-bg-new.jpg" 
-            alt="Grilled Eel Hero Background" 
+            alt="炭火慢烤中的頂級蒲燒鰻，油亮焦香" 
+            fetchPriority="high"
+            decoding="async"
+            width={1920}
+            height={1047}
             className="w-full h-full object-cover opacity-75 scale-105 transition-transform duration-10000"
             onError={(e) => {
               const target = e.currentTarget as HTMLImageElement;
@@ -400,6 +370,8 @@ const App = () => {
                 <img 
                   src="./acr_images/wu_full_magazine_original.png" 
                   alt="日本水產月刊 ACR 第10頁完整刊載：彰化縣福興鄉吳奇清養鰻場" 
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-auto object-contain block mx-auto hover:scale-[1.01] transition-transform duration-300"
                 />
                 <div className="p-4 bg-stone-950/95 border-t border-stone-800">
@@ -437,7 +409,7 @@ const App = () => {
             </div>
             <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 [text-wrap:balance]">三種規格・滿足不同挑剔味蕾</h2>
             <p className="text-stone-400 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed [text-wrap:balance]">
-              <span className="inline-block">每種規格每包均為 <strong className="text-white">一公斤裝</strong>，均一超值特惠價 <strong className="text-amber-400 font-bold whitespace-nowrap">$1,000 元/kg</strong>。</span>
+              <span className="inline-block">每種規格每包均為 <strong className="text-white">一公斤裝</strong>，均一超值特惠價 <strong className="text-amber-400 font-bold whitespace-nowrap">{currency(PRICE_PER_KG)} 元/kg</strong>。</span>
               <span className="inline-block">蒲燒醬汁已完美調味，冷凍真空包裝，效期長達兩年。</span>
             </p>
             
@@ -458,6 +430,8 @@ const App = () => {
                <img
                  src="./images/01.jpg"
                  alt="炭火直烤鰻魚情境"
+                 loading="lazy"
+                 decoding="async"
                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                  onError={(e) => {
                    const target = e.currentTarget as HTMLImageElement;
@@ -475,6 +449,8 @@ const App = () => {
                <img
                  src="./images/02.jpg" 
                  alt="真空包裝加熱即食"
+                 loading="lazy"
+                 decoding="async"
                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                  onError={(e) => {
                    const target = e.currentTarget as HTMLImageElement;

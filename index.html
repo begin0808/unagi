@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>興旺蒲燒鰻 - 外銷日本頂級青口鰻 | 中秋送禮烤肉首選</title>
     <meta name="description" content="彰化深耕數十年外銷日本頂級極品「青口鰻」！油脂豐潤、肉質細緻，微波 3~5 分鐘即享料亭級蒲燒鰻魚飯。中秋烤肉與伴手禮首選，一公斤超值特惠 1000 元！" />
+    <link rel="canonical" href="https://xingwang-unagi.vercel.app/" />
 
     <!-- Open Graph / Facebook / LINE -->
     <meta property="og:type" content="website" />
@@ -16,6 +17,7 @@
     <meta property="og:description" content="彰化深耕數十年外銷日本頂級極品「青口鰻」！油脂豐潤、肉質細緻，微波 3~5 分鐘即享料亭級蒲燒鰻魚飯。中秋烤肉與伴手禮首選，一公斤超值特惠 1000 元！" />
     <meta property="og:image" content="https://xingwang-unagi.vercel.app/images/hero-bg-new.jpg" />
     <meta property="og:site_name" content="興旺蒲燒鰻" />
+    <meta property="og:locale" content="zh_TW" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -23,6 +25,76 @@
     <meta name="twitter:title" content="興旺蒲燒鰻 - 外銷日本頂級青口鰻 | 中秋送禮烤肉首選" />
     <meta name="twitter:description" content="彰化深耕數十年外銷日本頂級極品「青口鰻」！油脂豐潤、肉質細緻，微波 3~5 分鐘即享料亭級蒲燒鰻魚飯。" />
     <meta name="twitter:image" content="https://xingwang-unagi.vercel.app/images/hero-bg-new.jpg" />
+
+    <!--
+      結構化資料：讓 Google 搜尋結果能顯示商品價格與產地。
+      價格若有調整，這裡與 src/lib/pricing.ts、gas/Code.gs 都要一起改。
+      註：刻意不加 aggregateRating／review，沒有真實評價就不能標。
+    -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "興旺蒲燒鰻 外銷日本頂級青口鰻",
+      "image": "https://xingwang-unagi.vercel.app/images/hero-bg-new.jpg",
+      "description": "彰化縣福興鄉吳奇清養鰻場自產，長年外銷日本頂級料亭的「青口鰻」。以深海魚粉與純淨水質精細飼育，背青腹白、油脂豐潤、肉質細緻。已調味蒲燒醬汁，冷凍真空包裝，微波 3~5 分鐘即可上桌。",
+      "brand": { "@type": "Brand", "name": "興旺蒲燒鰻" },
+      "category": "冷凍水產 > 蒲燒鰻魚",
+      "countryOfOrigin": { "@type": "Country", "name": "臺灣" },
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "規格 A 霸氣大規格（3 條裝 / 1 公斤）",
+          "sku": "XW-A",
+          "price": "1000",
+          "priceCurrency": "TWD",
+          "availability": "https://schema.org/InStock",
+          "itemCondition": "https://schema.org/NewCondition",
+          "url": "https://xingwang-unagi.vercel.app/#contact"
+        },
+        {
+          "@type": "Offer",
+          "name": "規格 B 經典人氣款（4 條裝 / 1 公斤）",
+          "sku": "XW-B",
+          "price": "1000",
+          "priceCurrency": "TWD",
+          "availability": "https://schema.org/InStock",
+          "itemCondition": "https://schema.org/NewCondition",
+          "url": "https://xingwang-unagi.vercel.app/#contact"
+        },
+        {
+          "@type": "Offer",
+          "name": "規格 C 軟嫩珍稀款（5 條裝 / 1 公斤）",
+          "sku": "XW-C",
+          "price": "1000",
+          "priceCurrency": "TWD",
+          "availability": "https://schema.org/InStock",
+          "itemCondition": "https://schema.org/NewCondition",
+          "url": "https://xingwang-unagi.vercel.app/#contact"
+        }
+      ]
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "興旺蒲燒鰻",
+      "alternateName": "吳奇清養鰻場",
+      "description": "彰化縣福興鄉在地深耕數十年的養鰻場，專營外銷日本頂級料亭等級的青口鰻與蒲燒鰻魚產品。",
+      "url": "https://xingwang-unagi.vercel.app/",
+      "image": "https://xingwang-unagi.vercel.app/images/hero-bg-new.jpg",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "TW",
+        "addressRegion": "彰化縣",
+        "addressLocality": "福興鄉"
+      },
+      "areaServed": { "@type": "Country", "name": "臺灣" },
+      "currenciesAccepted": "TWD"
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
