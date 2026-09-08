@@ -42,6 +42,12 @@ npm run preview  # 預覽建置結果
 - 後端：`gas/Code.gs`、`gas/appsscript.json`
 - **設定與部署步驟：[`docs/訂購系統設定說明.md`](docs/訂購系統設定說明.md)**
 
+### 送禮禮盒
+
+禮盒免費附贈，數量上限為購買包數（一包最多配一個）。
+上限在 `pricing.ts` 的 `maxGiftBoxes()` 與 `gas/Code.gs` 的同名函式各有一份，改動時兩邊都要改。
+前後端都會夾住這個上限，避免包數減少後留下過多的禮盒數。
+
 ### 優惠碼
 
 優惠碼只存在 `gas/Code.gs` 的 `PROMO_CODES`，**不可以寫進網站程式碼**——網頁原始碼是公開的。

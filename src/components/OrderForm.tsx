@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Minus, Plus, Gift, Truck, ShoppingBag, CheckCircle2, AlertTriangle,
-  Loader2, X, ExternalLink, ClipboardList, Ticket, CheckCircle, ChevronRight,
+  Loader2, X, ExternalLink, ClipboardList, Ticket, CheckCircle, ChevronRight, Leaf,
 } from 'lucide-react';
 import {
-  SPECS, PRICE_PER_KG, GIFT_BOX_PRICE, SHIPPING_TIERS, FREE_SHIPPING_PACKS,
+  SPECS, PRICE_PER_KG, SHIPPING_TIERS, FREE_SHIPPING_PACKS, GIFT_BOX_CAPACITY,
   calcOrder, currency,
-  type Quantities, type SpecId,
+  type Quantities, type SpecId, type Packaging,
 } from '../lib/pricing';
 
 /**
@@ -106,7 +106,10 @@ const inputClass =
   'w-full bg-stone-900 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-stone-500 outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/40 transition-colors';
 
 const OrderForm = ({ quantities, setQuantities }: Props) => {
-  const [giftBoxes, setGiftBoxes] = useState(0);
+  const [packaging, setPackaging] = useState<Packaging>('self');
+  const [giftBoxes, setGiftBoxes] = useState(1);
+  // 包數變少導致禮盒超過上限時，自動下修並提示，避免出現「買 3 包配 5 個禮盒」
+  const [boxAdjusted, setBoxAdjusted] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -163,9 +166,29 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     summaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   const totals = useMemo(
-    () => calcOrder(quantities, giftBoxes, Boolean(appliedCode)),
-    [quantities, giftBoxes, appliedCode],
+    () => calcOrder(quantities, packaging, giftBoxes, Boolean(appliedCode)),
+    [quantities, packaging, giftBoxes, appliedCode],
   );
+
+  // 上限縮小時把選擇拉回合法範圍，並讓客人看到被調整了
+  useEffect(() => {
+    if (packaging !== 'gift') return;
+    if (giftBoxes > totals.maxBoxes) {
+      setGiftBoxes(totals.maxBoxes);
+      setBoxAdjusted(true);
+    }
+  }, [totals.maxBoxes, packaging, giftBoxes]);
+
+  const chooseGiftBoxes = (v: number) => {
+    setGiftBoxes(v);
+    setBoxAdjusted(false);
+  };
+
+  const choosePackaging = (v: Packaging) => {
+    setPackaging(v);
+    setBoxAdjusted(false);
+    if (v === 'gift' && giftBoxes < 1) setGiftBoxes(1);
+  };
 
   /**
    * 還沒設定 Apps Script 網址時（例如剛部署、環境變數尚未填），
@@ -250,7 +273,8 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           email: email.trim(),
           note: note.trim(),
           quantities,
-          giftBoxes,
+          packaging,
+          giftBoxes: totals.giftBoxes,
           promoCode: appliedCode,
           company, // honeypot
         }),
@@ -269,7 +293,9 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
 
   const resetAll = () => {
     setQuantities({ A: 0, B: 0, C: 0 });
-    setGiftBoxes(0);
+    setPackaging('self');
+    setGiftBoxes(1);
+    setBoxAdjusted(false);
     setName(''); setPhone(''); setAddress(''); setEmail(''); setNote('');
     setErrors({});
     setPromoInput('');
@@ -355,17 +381,83 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
             </p>
           )}
 
-          {/* 禮盒 */}
-          <div className="flex items-center justify-between gap-3 mt-5 pt-5 border-t border-white/10">
-            <div>
-              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
-                <Gift size={18} className="text-amber-400" /> 送禮禮盒
-              </div>
-              <p className="text-stone-400 text-xs mt-0.5">
-                每個 {currency(GIFT_BOX_PRICE)}，一盒可裝 3~4 片，送禮更體面
-              </p>
+          {/* 包裝方式 */}
+          <div className="mt-5 pt-5 border-t border-white/10">
+            <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base mb-3">
+              <Gift size={18} className="text-amber-400" /> 包裝方式
             </div>
-            <Stepper label="禮盒數量" value={giftBoxes} onChange={setGiftBoxes} />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => choosePackaging('self')}
+                aria-pressed={packaging === 'self'}
+                className={`text-left p-3.5 rounded-xl border transition-colors ${
+                  packaging === 'self'
+                    ? 'border-green-400/60 bg-green-500/10'
+                    : 'border-white/10 bg-stone-900/60 hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 text-white font-bold text-sm">
+                  <Leaf size={15} className="text-green-400" /> 自用
+                </div>
+                <p className="text-stone-400 text-xs mt-1 leading-relaxed">
+                  真空包裝直送，不附禮盒。少用一份包裝材，謝謝您一起節約資源。
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => choosePackaging('gift')}
+                aria-pressed={packaging === 'gift'}
+                className={`text-left p-3.5 rounded-xl border transition-colors ${
+                  packaging === 'gift'
+                    ? 'border-amber-400/60 bg-amber-500/10'
+                    : 'border-white/10 bg-stone-900/60 hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 text-white font-bold text-sm">
+                  <Gift size={15} className="text-amber-400" /> 送禮
+                </div>
+                <p className="text-stone-400 text-xs mt-1 leading-relaxed">
+                  免費附贈禮盒，送禮更體面。
+                </p>
+              </button>
+            </div>
+
+            {packaging === 'gift' && (
+              <div className="mt-4 bg-stone-900/60 rounded-xl border border-white/10 p-3.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-white font-bold text-sm">需要幾個禮盒？</div>
+                    <p className="text-stone-400 text-xs mt-0.5">
+                      {totals.packs > 0
+                        ? `最多 ${totals.maxBoxes} 個`
+                        : '請先選擇商品數量'}
+                    </p>
+                  </div>
+                  <Stepper
+                    label="禮盒數量"
+                    value={giftBoxes}
+                    onChange={chooseGiftBoxes}
+                    min={totals.packs > 0 ? 1 : 0}
+                    max={totals.maxBoxes}
+                  />
+                </div>
+
+                {boxAdjusted && (
+                  <p className="text-amber-300 text-xs mt-2.5 flex items-start gap-1.5">
+                    <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
+                    商品數量減少，禮盒數量已調整為 {totals.maxBoxes} 個，請確認是否需要重新選擇。
+                  </p>
+                )}
+
+                <p className="text-stone-400 text-xs mt-2.5 leading-relaxed">
+                  一個禮盒可裝 {GIFT_BOX_CAPACITY}，請依要送的對象人數選擇。
+                  禮盒會與商品一併寄到您填寫的地址；需分別寄給不同收件人請分開下單。
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -473,10 +565,10 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 </div>
               ))}
 
-              {giftBoxes > 0 && (
+              {totals.giftBoxes > 0 && (
                 <div className="flex justify-between items-baseline text-stone-300">
-                  <span>送禮禮盒<span className="text-stone-500"> × {giftBoxes}</span></span>
-                  <span className="font-bold text-white whitespace-nowrap">{currency(totals.giftTotal)}</span>
+                  <span>送禮禮盒<span className="text-stone-500"> × {totals.giftBoxes}</span></span>
+                  <span className="font-bold text-green-400 whitespace-nowrap">免費</span>
                 </div>
               )}
 
@@ -651,10 +743,14 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                         <span className="text-white font-bold">{currency(quantities[s.id] * PRICE_PER_KG)}</span>
                       </div>
                     ))}
-                    {giftBoxes > 0 && (
+                    <div className="flex justify-between text-stone-300">
+                      <span>包裝方式</span>
+                      <span className="font-bold text-white">{packaging === 'gift' ? '送禮' : '自用'}</span>
+                    </div>
+                    {totals.giftBoxes > 0 && (
                       <div className="flex justify-between text-stone-300">
-                        <span>送禮禮盒 × {giftBoxes}</span>
-                        <span className="text-white font-bold">{currency(totals.giftTotal)}</span>
+                        <span>送禮禮盒 × {totals.giftBoxes}</span>
+                        <span className="text-green-400 font-bold">免費附贈</span>
                       </div>
                     )}
                     <div className="flex justify-between text-stone-300 pt-2 border-t border-white/10">

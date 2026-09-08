@@ -62,7 +62,15 @@ const DISCOUNT_STEP_VALUE = 50;
 
 /** 價格規則，需與網站 src/lib/pricing.ts 保持一致 */
 const PRICE_PER_KG = 1000;
-const GIFT_BOX_PRICE = 50;
+
+/**
+ * 送禮禮盒免費附贈，數量上限為購買包數（一包最多配一個）。
+ * 一個禮盒可裝 3~4 包，所以需要幾個取決於要送幾位對象，
+ * 而對象數不可能超過包數。
+ */
+function maxGiftBoxes(packs) {
+  return Math.max(0, packs);
+}
 
 const SPEC_NAMES = {
   A: '霸氣大規格（3 條裝 / 1kg）',
@@ -80,7 +88,7 @@ function shippingFee(packs) {
 
 const HEADERS = [
   '訂單編號', '訂單時間', '姓名', '電話', '地址', 'Email',
-  '規格A', '規格B', '規格C', '總公斤', '禮盒數',
+  '規格A', '規格B', '規格C', '總公斤', '包裝方式', '禮盒數',
   '商品金額', '禮盒金額', '運費', '優惠碼', '折扣金額',
   '總金額', '備註', '處理狀態',
 ];
@@ -116,8 +124,14 @@ function doPost(e) {
     const qa = toCount(q.A);
     const qb = toCount(q.B);
     const qc = toCount(q.C);
-    const boxes = toCount(data.giftBoxes);
     const packs = qa + qb + qc;
+
+    // 包裝方式：只有「送禮」才附禮盒，且數量不得超過包數。
+    // 前端已經夾過一次，這裡再夾一次——瀏覽器送來的數字不能採信。
+    const packaging = data.packaging === 'gift' ? 'gift' : 'self';
+    const boxes = packaging === 'gift'
+      ? Math.min(toCount(data.giftBoxes), maxGiftBoxes(packs))
+      : 0;
 
     if (!name) return json({ ok: false, message: '缺少收件人姓名' });
     if (!phone) return json({ ok: false, message: '缺少聯絡電話' });
@@ -126,11 +140,10 @@ function doPost(e) {
     if (!email) return json({ ok: false, message: '缺少 Email' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ ok: false, message: 'Email 格式不正確' });
     if (packs < 1) return json({ ok: false, message: '訂單數量為 0' });
-    if (packs > 200 || boxes > 200) return json({ ok: false, message: '訂單數量異常' });
+    if (packs > 200) return json({ ok: false, message: '訂單數量異常' });
 
     // 金額一律由後端重算
     const itemsTotal = packs * PRICE_PER_KG;
-    const giftTotal = boxes * GIFT_BOX_PRICE;
     const shipping = shippingFee(packs);
 
     // 優惠碼再驗一次：前端說「已套用」不算數，這裡說了才算
@@ -143,7 +156,7 @@ function doPost(e) {
       discount = promoDiscount_(itemsTotal);
     }
 
-    const total = itemsTotal + giftTotal + shipping - discount;
+    const total = itemsTotal + shipping - discount;
 
     // 用鎖避免同時下單時訂單編號重複
     const lock = LockService.getScriptLock();
@@ -158,8 +171,8 @@ function doPost(e) {
 
       sheet.appendRow([
         orderNo, now, name, phone, address, email,
-        qa, qb, qc, packs, boxes,
-        itemsTotal, giftTotal, shipping, promoCode, discount,
+        qa, qb, qc, packs, packaging === 'gift' ? '送禮' : '自用', boxes,
+        itemsTotal, 0, shipping, promoCode, discount,
         total, note, '待確認',
       ]);
     } finally {
@@ -169,7 +182,7 @@ function doPost(e) {
     const order = {
       orderNo: orderNo, time: now, name: name, phone: phone, address: address,
       email: email, note: note, qa: qa, qb: qb, qc: qc, packs: packs, boxes: boxes,
-      itemsTotal: itemsTotal, giftTotal: giftTotal, shipping: shipping,
+      itemsTotal: itemsTotal, packaging: packaging, shipping: shipping,
       promoCode: promoCode, discount: discount, total: total,
     };
 
@@ -251,11 +264,12 @@ function getSheet_() {
     sheet.setFrozenRows(1);
     sheet.setColumnWidth(2, 150); // 訂單時間
     sheet.setColumnWidth(5, 280); // 地址
-    sheet.setColumnWidth(18, 220); // 備註
+    sheet.setColumnWidth(HEADERS.indexOf('備註') + 1, 220);
     return sheet;
   }
 
   migratePromoColumns_(sheet);
+  migratePackagingColumn_(sheet);
   return sheet;
 }
 
@@ -290,6 +304,39 @@ function migratePromoColumns_(sheet) {
   }
 }
 
+/**
+ * 舊版試算表沒有「包裝方式」欄。
+ * 在「禮盒數」左邊插入一欄，既有資料由 Sheets 自動右移，不會錯位。
+ * 既有訂單依禮盒數推回包裝方式（有禮盒＝送禮）。
+ */
+function migratePackagingColumn_(sheet) {
+  const width = sheet.getLastColumn();
+  if (width < 1) return;
+
+  const header = sheet.getRange(1, 1, 1, width).getValues()[0];
+  if (header.indexOf('包裝方式') !== -1) return;
+
+  const boxCol = header.indexOf('禮盒數') + 1;
+  if (boxCol <= 0) return;
+
+  sheet.insertColumnsBefore(boxCol, 1);
+  sheet.getRange(1, boxCol)
+    .setValue('包裝方式')
+    .setFontWeight('bold')
+    .setBackground('#1c1917')
+    .setFontColor('#fbbf24');
+
+  const rows = sheet.getLastRow() - 1;
+  if (rows > 0) {
+    const boxes = sheet.getRange(2, boxCol + 1, rows, 1).getValues();
+    const labels = [];
+    for (let i = 0; i < rows; i++) {
+      labels.push([Number(boxes[i][0]) > 0 ? '送禮' : '自用']);
+    }
+    sheet.getRange(2, boxCol, rows, 1).setValues(labels);
+  }
+}
+
 /** 產生 XW20260906-001 形式的訂單編號 */
 function nextOrderNo_(sheet, now) {
   const prefix = 'XW' + Utilities.formatDate(now, 'Asia/Taipei', 'yyyyMMdd');
@@ -310,7 +357,7 @@ function itemLines_(o) {
   if (o.qa) rows.push('規格 A ' + SPEC_NAMES.A + ' × ' + o.qa + '　' + money_(o.qa * PRICE_PER_KG));
   if (o.qb) rows.push('規格 B ' + SPEC_NAMES.B + ' × ' + o.qb + '　' + money_(o.qb * PRICE_PER_KG));
   if (o.qc) rows.push('規格 C ' + SPEC_NAMES.C + ' × ' + o.qc + '　' + money_(o.qc * PRICE_PER_KG));
-  if (o.boxes) rows.push('送禮禮盒 × ' + o.boxes + '　' + money_(o.giftTotal));
+  if (o.boxes) rows.push('送禮禮盒 × ' + o.boxes + '　免費附贈');
   return rows.join('\n');
 }
 
@@ -328,7 +375,7 @@ function orderBody_(o) {
     itemLines_(o),
     '',
     '商品金額：' + money_(o.itemsTotal),
-    '禮盒金額：' + money_(o.giftTotal),
+    '包裝方式：' + (o.packaging === 'gift' ? '送禮（附贈禮盒 ' + o.boxes + ' 個）' : '自用（不附禮盒）'),
     '運費（共 ' + o.packs + ' 公斤）：' + (o.shipping === 0 ? '免運費' : money_(o.shipping)),
     o.discount > 0 ? '優惠碼折抵（' + o.promoCode + '）：-' + money_(o.discount) : '',
     '應付總金額：' + money_(o.total),
@@ -392,6 +439,7 @@ function testWrite() {
         email: TEST_EMAIL,
         note: '這是一筆測試訂單，確認後請刪除',
         quantities: { A: 1, B: 2, C: 0 },
+        packaging: 'gift',
         giftBoxes: 2,
         promoCode: PROMO_CODES.length ? PROMO_CODES[0] : '',
       }),

@@ -18,8 +18,21 @@ export const PRICE_PER_KG = 1000;
 /** 原價，用於顯示折扣 */
 export const ORIGINAL_PRICE_PER_KG = 1200;
 
-/** 送禮禮盒單價，每個可裝 3~4 片 */
-export const GIFT_BOX_PRICE = 50;
+/**
+ * 送禮禮盒：免費附贈，不再另外收費。
+ *
+ * 一個禮盒可裝 3~4 包，所以「需要幾個」取決於要送幾個對象，
+ * 而對象數最多不會超過包數（一包無法拆給兩個人），
+ * 因此購買包數就是天然的數量上限，不需要另外訂規則。
+ */
+export const GIFT_BOX_CAPACITY = '3~4 包';
+
+/** 免費禮盒的數量上限：一包最多配一個 */
+export function maxGiftBoxes(packs: number): number {
+  return Math.max(0, packs);
+}
+
+export type Packaging = 'self' | 'gift';
 
 /**
  * 優惠碼折扣：以「商品金額」每滿 DISCOUNT_STEP_AMOUNT 元，折 DISCOUNT_STEP_VALUE 元，
@@ -150,34 +163,40 @@ export function shippingFee(packs: number): number {
 export interface OrderTotals {
   packs: number;
   itemsTotal: number;
-  giftTotal: number;
   shipping: number;
   discount: number;
   total: number;
+  /** 實際附贈的禮盒數，已依包數上限修正過 */
+  giftBoxes: number;
+  /** 目前可選的禮盒數量上限 */
+  maxBoxes: number;
   /** 還差幾包才免運，0 代表已免運或尚未選購 */
   packsToFreeShipping: number;
 }
 
 export function calcOrder(
   quantities: Quantities,
+  packaging: Packaging,
   giftBoxes: number,
   promoApplied = false,
 ): OrderTotals {
   const packs = PRODUCTS.reduce((sum, p) => sum + Math.max(0, quantities[p.id] || 0), 0);
-  const boxes = Math.max(0, giftBoxes || 0);
+  const maxBoxes = maxGiftBoxes(packs);
+  // 上限一律在這裡夾住：包數減少時，先前選的禮盒數不能超過新的上限
+  const boxes = packaging === 'gift' ? Math.min(Math.max(0, giftBoxes || 0), maxBoxes) : 0;
 
   const itemsTotal = packs * PRICE_PER_KG;
-  const giftTotal = boxes * GIFT_BOX_PRICE;
   const shipping = shippingFee(packs);
   const discount = promoApplied ? promoDiscount(itemsTotal) : 0;
 
   return {
     packs,
     itemsTotal,
-    giftTotal,
     shipping,
     discount,
-    total: itemsTotal + giftTotal + shipping - discount,
+    total: itemsTotal + shipping - discount,
+    giftBoxes: boxes,
+    maxBoxes,
     packsToFreeShipping:
       packs > 0 && packs < FREE_SHIPPING_PACKS ? FREE_SHIPPING_PACKS - packs : 0,
   };
