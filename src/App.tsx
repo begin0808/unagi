@@ -38,7 +38,7 @@ const FAQS = [
       "禮盒免費附贈，不另外收費。訂購時選擇「送禮」，即可依要送的對象人數選擇禮盒數量；\n" +
       "一個禮盒可裝 3~4 包，最多可選到與購買包數相同的數量。\n\n" +
       "【禮盒會分開包裝，不會預先裝入鰻魚】\n" +
-      "鰻魚全程真空冷凍配送，紙製禮盒若與冷凍品裝在一起容易受潮軟塌，\n" +
+      "鰻魚全程真空冷凍配送，紙製禮盒若與冷凍品裝在一起容易受潮變軟，\n" +
       "因此禮盒會分開包裝、隨同一箱寄出。請您收到後先將鰻魚冷凍保存，\n" +
       "要送禮之前再自行把鰻魚放入禮盒，這樣禮盒才不會受潮變形，送出去也更體面。\n\n" +
       "若是自己享用，選擇「自用」就不附禮盒，少用一份包裝材，也謝謝您一起節約資源。\n\n" +
@@ -252,8 +252,8 @@ const App = () => {
             </h2>
             
             <p className="text-base sm:text-lg md:text-xl text-stone-300 max-w-2xl mx-auto leading-relaxed [text-wrap:balance]">
-              <span className="inline-block">趁中秋前搶鮮下單，烤肉架上香氣逼人、秒殺全場！</span>
-              <span className="inline-block">送禮體面大器，與親友共享外銷日本的尊貴美味。</span>
+              <span className="inline-block">趁中秋前搶鮮下單，烤肉架上香氣逼人，一上桌就被搶光！</span>
+              <span className="inline-block">送禮體面又大方，與親友共享外銷日本的尊貴美味。</span>
             </p>
           </div>
 
@@ -378,7 +378,7 @@ const App = () => {
                       </div>
                     </div>
                     <div className="flex items-center text-amber-400 text-xs font-bold gap-1 flex-shrink-0">
-                      <span>點擊閱讀</span>
+                      <span>點選閱讀</span>
                       <ExternalLink size={14} className="group-hover:translate-x-0.5 transition-transform" />
                     </div>
                   </div>
@@ -400,7 +400,7 @@ const App = () => {
                 <div className="p-4 bg-stone-950/95 border-t border-stone-800">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="bg-amber-500 text-stone-950 text-xs font-extrabold px-2.5 py-0.5 rounded">
-                      日本《ACR》月刊刊載原貌・零裁切
+                      日本《ACR》月刊刊載原貌・未經裁切
                     </span>
                     <a 
                       href="./ACR.html#wu-special" 
@@ -408,7 +408,7 @@ const App = () => {
                       rel="noopener noreferrer" 
                       className="text-amber-400 hover:text-amber-300 text-xs font-bold flex items-center gap-1 group"
                     >
-                      <span>點擊查看報導內容</span>
+                      <span>點選查看報導內容</span>
                       <ExternalLink size={12} className="group-hover:translate-x-0.5 transition-transform" />
                     </a>
                   </div>
@@ -547,7 +547,7 @@ const App = () => {
               <span className="whitespace-nowrap">3~5 分鐘</span>料亭美味上桌
             </h2>
             <p className="text-stone-400 text-base sm:text-lg max-w-xl mx-auto [text-wrap:balance] leading-relaxed">
-              <span className="inline-block">蒲燒醬汁已完美入味，無需繁複料理程序，</span>
+              <span className="inline-block">蒲燒醬汁已完美入味，無需繁複料理步驟，</span>
               <span className="inline-block">任選以下方式加熱，即可還原炭烤極致風味！</span>
             </p>
           </div>

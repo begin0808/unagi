@@ -240,7 +240,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     if (!name.trim()) next.name = '請填寫收件人姓名';
     if (!phone.trim()) next.phone = '請填寫聯絡電話';
     else if (!/^[\d\-+()\s]{8,20}$/.test(phone.trim())) next.phone = '電話格式看起來不正確';
-    if (!address.trim()) next.address = '請填寫收貨地址';
+    if (!address.trim()) next.address = '請填寫收件地址';
     // 自取／面交不需要地址，長度檢查要放行
     else if (!/自取|面交/.test(address) && address.trim().length < 8)
       next.address = '請填寫完整地址（含縣市與門牌號碼）；自取或面交請直接填「自取」或「面交」';
@@ -456,7 +456,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                   <p>一個禮盒可裝 {GIFT_BOX_CAPACITY}，請依要送的對象人數選擇。</p>
                   <p className="text-amber-300/90">
                     禮盒會分開包裝、隨箱一起寄出，<strong className="text-amber-200">不會預先把鰻魚裝進去</strong>——
-                    紙盒與冷凍品放在一起容易受潮軟塌。請您收到後冷凍保存，要送禮前再自行裝盒。
+                    紙盒與冷凍品放在一起容易受潮變軟。請您收到後冷凍保存，要送禮前再自行裝盒。
                   </p>
                   <p>禮盒與商品寄至同一個地址；需分別寄給不同收件人請分開下單。</p>
                 </div>
@@ -522,7 +522,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               onChange={(e) => setPhone(e.target.value)} placeholder="0912-345-678" autoComplete="tel" />
           </Field>
 
-          <Field id="of-address" label="收貨地址" required error={errors.address}
+          <Field id="of-address" label="收件地址" required error={errors.address}
             hint="黑貓冷凍宅配；自取或面交請直接填「自取」或「面交」">
             <input id="of-address" className={inputClass} value={address}
               onChange={(e) => setAddress(e.target.value)}

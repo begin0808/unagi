@@ -135,7 +135,7 @@ function doPost(e) {
 
     if (!name) return json({ ok: false, message: '缺少收件人姓名' });
     if (!phone) return json({ ok: false, message: '缺少聯絡電話' });
-    if (!address) return json({ ok: false, message: '缺少收貨地址' });
+    if (!address) return json({ ok: false, message: '缺少收件地址' });
     // Email 為必填：顧客要靠確認信核對訂單內容，避免到貨後爭議
     if (!email) return json({ ok: false, message: '缺少 Email' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ ok: false, message: 'Email 格式不正確' });

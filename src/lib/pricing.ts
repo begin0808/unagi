@@ -85,7 +85,7 @@ const SPEC_SEEDS: SpecSeed[] = [
     gramsPerFillet: 333,
     hint: '厚切 Q 彈紮實',
     description: '魚身厚實寬大、肉質紮實且口感極富 Q 彈嚼勁！',
-    detail: '【大口過癮】適合喜愛肉質厚實、豪邁大口吃肉的饕客老饕首選。',
+    detail: '【大口過癮】適合喜愛肉質厚實、豪邁大口吃肉的老饕首選。',
     tag: '厚切・Q彈紮實',
     tagColor: 'bg-amber-600',
   },
