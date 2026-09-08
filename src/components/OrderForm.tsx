@@ -452,10 +452,14 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                   </p>
                 )}
 
-                <p className="text-stone-400 text-xs mt-2.5 leading-relaxed">
-                  一個禮盒可裝 {GIFT_BOX_CAPACITY}，請依要送的對象人數選擇。
-                  禮盒會與商品一併寄到您填寫的地址；需分別寄給不同收件人請分開下單。
-                </p>
+                <div className="text-stone-400 text-xs mt-2.5 leading-relaxed space-y-1.5">
+                  <p>一個禮盒可裝 {GIFT_BOX_CAPACITY}，請依要送的對象人數選擇。</p>
+                  <p className="text-amber-300/90">
+                    禮盒會分開包裝、隨箱一起寄出，<strong className="text-amber-200">不會預先把鰻魚裝進去</strong>——
+                    紙盒與冷凍品放在一起容易受潮軟塌。請您收到後冷凍保存，要送禮前再自行裝盒。
+                  </p>
+                  <p>禮盒與商品寄至同一個地址；需分別寄給不同收件人請分開下單。</p>
+                </div>
               </div>
             )}
           </div>
