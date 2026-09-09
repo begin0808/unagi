@@ -664,11 +664,20 @@ const App = () => {
               </div>
               <div>
                 <h4 className="text-white font-bold text-sm sm:text-base">訂購小叮嚀</h4>
-                <p className="text-stone-400 text-xs sm:text-sm leading-relaxed mt-1">
-                  規格 A 為 3 條裝、B 為 4 條裝、C 為 5 條裝，每包均為 1 公斤，可自由混搭。
-                  送出後會立即寄一封訂單確認信到您填寫的 Email，請務必收信核對；內容有誤直接回覆該封信告知即可。
-                  我們也會由專人與您聯繫確認付款方式與出貨時間；中秋等節慶檔期物流較繁忙，建議提早下單。
-                  到貨時間、指定日期、自取或面交、大量訂購與送禮包裝，歡迎先來電洽詢（聯絡電話見頁尾）。
+                <p className="text-stone-400 text-xs sm:text-sm leading-relaxed mt-1 [text-wrap:balance]">
+                  {/* 每句各自 inline-block：JSX 換行會產生空白，直接寫多行會在句子交界處
+                      造成怪異的斷行（單字被留在行尾） */}
+                  <span className="inline-block">規格 A 為 3 條裝、B 為 4 條裝、</span>
+                  <span className="inline-block">C 為 5 條裝，每包均為 1 公斤，可自由混搭。</span>
+                  <span className="inline-block">送出後會立即寄一封訂單確認信，</span>
+                  <span className="inline-block">請至您填寫的 Email 收信核對；</span>
+                  <span className="inline-block">內容有誤直接回覆該封信告知即可。</span>
+                  <span className="inline-block">我們也會由專人與您聯繫，</span>
+                  <span className="inline-block">確認付款方式與出貨時間；</span>
+                  <span className="inline-block">中秋等節慶檔期物流較繁忙，建議提早下單。</span>
+                  <span className="inline-block">到貨時間、指定日期、自取或面交、</span>
+                  <span className="inline-block">大量訂購與送禮包裝，</span>
+                  <span className="inline-block">歡迎先來電洽詢（聯絡電話見頁尾）。</span>
                 </p>
               </div>
             </div>

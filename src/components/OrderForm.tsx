@@ -325,10 +325,15 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
             您的訂單編號：<span className="text-amber-400 font-bold tracking-wider">{orderNo}</span>
           </p>
         )}
-        <p className="text-stone-400 text-sm sm:text-base leading-relaxed max-w-md mx-auto mb-8">
-          訂單確認信已寄至您填寫的 Email，請收信核對訂購內容；
-          若有任何需要更正的地方，直接回覆該封信件告知我們即可。
-          我們也會盡快由專人與您聯繫確認付款方式與出貨時間。
+        {/* 每個子句各自 inline-block：避免 JSX 換行產生的空白造成斷行，
+            也讓窄螢幕只會在子句之間換行，不會把詞拆開 */}
+        <p className="text-stone-400 text-sm sm:text-base leading-relaxed max-w-md mx-auto mb-8 [text-wrap:balance]">
+          <span className="inline-block">訂單確認信已寄至您填寫的 Email，</span>
+          <span className="inline-block">請收信核對訂購內容。</span>
+          <span className="inline-block">若有任何需要更正的地方，</span>
+          <span className="inline-block">直接回覆該封信件告知我們即可。</span>
+          <span className="inline-block">我們也會盡快由專人與您聯繫，</span>
+          <span className="inline-block">確認付款方式與出貨時間。</span>
         </p>
         <button
           onClick={resetAll}
