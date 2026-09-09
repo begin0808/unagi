@@ -40,25 +40,36 @@ const NOTIFY_EMAIL = '';
 const SHOP_NAME = '興旺蒲燒鰻';
 
 /**
- * 優惠碼清單 —— 這是整套系統唯一存放優惠碼的地方。
+ * 優惠碼清單 —— 這是整套系統唯一存放優惠碼與折扣額度的地方。
  *
  * ⚠️ 絕對不要把優惠碼寫進網站的程式碼裡。
  * 網頁原始碼任何人都能打開來看，寫在那裡等於公告週知，
- * 「熟識朋友專屬」就失去意義了。網站只會把客人輸入的碼送來這裡問「對不對」。
+ * 「熟識朋友專屬」就失去意義了。網站只會把客人輸入的碼送來這裡問「對不對」，
+ * 驗證通過後才回傳折扣額度給網頁計算，沒有碼的人什麼都看不到。
  *
- * 比對時不分大小寫、自動去除前後空白。
+ * 每一筆的意思是：
+ *   codes            這組折扣接受哪些寫法。填成陣列可以設多個別名，
+ *                    例如 ['XW50', '荒野'] 兩種寫法都能用（中文碼可以）。
+ *   discountPerStep  商品金額每滿 DISCOUNT_STEP_AMOUNT 元，折抵多少。
+ *
+ * 比對時不分大小寫、自動去除所有空白、全形字自動轉半形，
+ * 所以「xw50」「ＸＷ５０」「 XW 50 」都能通過。
+ *
  * 要停用優惠碼功能，把陣列清空即可：const PROMO_CODES = [];
  * 要換碼或加碼，改完存檔後記得「部署 → 管理部署作業 → 編輯 → 新版本」。
  */
-const PROMO_CODES = ['XW2026'];
+const PROMO_CODES = [
+  { codes: ['XW50'],  discountPerStep: 50 },   // 每滿 1,000 折 50
+  { codes: ['XW100'], discountPerStep: 100 },  // 每滿 1,000 折 100
+];
 
 /**
- * 折扣規則：以「商品金額」（不含禮盒與運費）每滿 DISCOUNT_STEP_AMOUNT 元，
- * 折抵 DISCOUNT_STEP_VALUE 元，不足一階的零頭不計，不設上限。
- *   1000 → 折 50、2000 → 折 100、3000 → 折 150、4000 → 折 200 ⋯
+ * 折扣以「商品金額」（不含禮盒與運費）每滿這個金額折抵一次，
+ * 不足一階的零頭不計，不設上限。每一階折多少由上面各碼自己決定。
+ *   XW50 ：1000 → 50、2000 → 100、3000 → 150 ⋯
+ *   XW100：1000 → 100、2000 → 200、3000 → 300 ⋯
  */
 const DISCOUNT_STEP_AMOUNT = 1000;
-const DISCOUNT_STEP_VALUE = 50;
 
 /** 價格規則，需與網站 src/lib/pricing.ts 保持一致 */
 const PRICE_PER_KG = 1000;
@@ -118,7 +129,11 @@ function doPost(e) {
 
     // 優惠碼查驗：只回答「有效或無效」，不回傳任何碼的內容
     if (data.action === 'verifyPromo') {
-      return json({ ok: true, valid: isValidPromo_(data.code) });
+      const found = findPromo_(data.code);
+      // 驗證通過才回傳折扣額度；無效時不透露任何資訊
+      return found
+        ? json({ ok: true, valid: true, discountPerStep: found.discountPerStep })
+        : json({ ok: true, valid: false });
     }
 
     // 蜜罐欄位：真人看不到這個欄位，有填就是機器人。
@@ -167,10 +182,11 @@ function doPost(e) {
     const promoCode = normalizePromo_(data.promoCode);
     let discount = 0;
     if (promoCode) {
-      if (!isValidPromo_(promoCode)) {
+      const promo = findPromo_(promoCode);
+      if (!promo) {
         return json({ ok: false, message: '優惠碼不正確或已失效，請重新確認' });
       }
-      discount = promoDiscount_(itemsTotal);
+      discount = promoDiscount_(itemsTotal, promo.discountPerStep);
     }
 
     const total = itemsTotal + giftTotal + shipping - discount;
@@ -225,22 +241,37 @@ function doGet() {
 
 /* ===================== 優惠碼 ===================== */
 
+/**
+ * 正規化優惠碼，讓客人怎麼打都能通過：
+ * 全形轉半形、去掉所有空白（含全形空白）、英文一律轉大寫。
+ * 中文字不受影響，所以中文優惠碼也適用。
+ */
 function normalizePromo_(code) {
-  return String(code || '').trim().toUpperCase();
+  return String(code || '')
+    .replace(/[\uFF01-\uFF5E]/g, function (c) {
+      return String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
+    })
+    .replace(/[\s\u3000]/g, '')
+    .toUpperCase();
 }
 
-function isValidPromo_(code) {
+/** 找出這組碼對應的折扣設定，找不到回傳 null */
+function findPromo_(code) {
   const target = normalizePromo_(code);
-  if (!target) return false;
+  if (!target) return null;
   for (let i = 0; i < PROMO_CODES.length; i++) {
-    if (normalizePromo_(PROMO_CODES[i]) === target) return true;
+    const entry = PROMO_CODES[i];
+    const codes = entry.codes || [];
+    for (let j = 0; j < codes.length; j++) {
+      if (normalizePromo_(codes[j]) === target) return entry;
+    }
   }
-  return false;
+  return null;
 }
 
-function promoDiscount_(itemsTotal) {
-  if (itemsTotal <= 0) return 0;
-  return Math.floor(itemsTotal / DISCOUNT_STEP_AMOUNT) * DISCOUNT_STEP_VALUE;
+function promoDiscount_(itemsTotal, valuePerStep) {
+  if (itemsTotal <= 0 || !valuePerStep) return 0;
+  return Math.floor(itemsTotal / DISCOUNT_STEP_AMOUNT) * valuePerStep;
 }
 
 /* ===================== 工具函式 ===================== */
@@ -470,7 +501,7 @@ function testWrite() {
         quantities: { A: 1, B: 2, C: 0 },
         packaging: 'gift',
         giftBoxes: 2,
-        promoCode: PROMO_CODES.length ? PROMO_CODES[0] : '',
+        promoCode: PROMO_CODES.length ? PROMO_CODES[0].codes[0] : '',
       }),
     },
   };
@@ -483,7 +514,10 @@ function testPromo() {
     const r = doPost({ postData: { contents: JSON.stringify({ action: 'verifyPromo', code: code }) } });
     Logger.log('「' + code + '」→ ' + r.getContent());
   };
-  check(PROMO_CODES.length ? PROMO_CODES[0] : 'NONE');
-  check('  ' + (PROMO_CODES.length ? PROMO_CODES[0].toLowerCase() : 'none') + '  '); // 大小寫與空白應照樣通過
+  for (let i = 0; i < PROMO_CODES.length; i++) {
+    const c = PROMO_CODES[i].codes[0];
+    check(c);
+    check('  ' + c.toLowerCase() + '  '); // 大小寫與空白應照樣通過
+  }
   check('WRONGCODE');
 }

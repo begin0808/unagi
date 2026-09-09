@@ -126,6 +126,8 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   // 客人改動輸入框時要立刻取消已套用狀態，避免看到與實際不符的金額。
   const [promoInput, setPromoInput] = useState('');
   const [appliedCode, setAppliedCode] = useState('');
+  /** 這組碼每滿一階折抵多少，由後端驗證後回傳 */
+  const [appliedStep, setAppliedStep] = useState(0);
   const [promoState, setPromoState] = useState<PromoState>('idle');
 
   /**
@@ -167,8 +169,8 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     summaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   const totals = useMemo(
-    () => calcOrder(quantities, packaging, giftBoxes, Boolean(appliedCode)),
-    [quantities, packaging, giftBoxes, appliedCode],
+    () => calcOrder(quantities, packaging, giftBoxes, appliedStep),
+    [quantities, packaging, giftBoxes, appliedStep],
   );
 
   // 上限縮小時把選擇拉回合法範圍，並讓客人看到被調整了
@@ -213,13 +215,16 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
       const data = await res.json();
       if (data && data.ok && data.valid) {
         setAppliedCode(code);
+        setAppliedStep(Number(data.discountPerStep) || 0);
         setPromoState('ok');
       } else {
         setAppliedCode('');
+        setAppliedStep(0);
         setPromoState('bad');
       }
     } catch {
       setAppliedCode('');
+      setAppliedStep(0);
       setPromoState('bad');
     }
   };
@@ -228,6 +233,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setPromoInput(v);
     if (appliedCode || promoState !== 'idle') {
       setAppliedCode('');
+      setAppliedStep(0);
       setPromoState('idle');
     }
   };
@@ -301,6 +307,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setErrors({});
     setPromoInput('');
     setAppliedCode('');
+    setAppliedStep(0);
     setPromoState('idle');
     setStep('form');
   };
@@ -403,7 +410,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                   <Leaf size={15} className="text-green-400" /> 自用
                 </div>
                 <p className="text-stone-400 text-xs mt-1 leading-relaxed">
-                  真空包裝直送，不附禮盒。少用一份包裝材，謝謝您一起節約資源。
+                  真空包裝直送，不附禮盒。少用一份包裝材，謝謝您一起節約資源，愛地球。
                 </p>
               </button>
 

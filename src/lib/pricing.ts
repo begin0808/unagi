@@ -58,19 +58,21 @@ export function totalFillets(quantities: Quantities): number {
 export type Packaging = 'self' | 'gift';
 
 /**
- * 優惠碼折扣：以「商品金額」每滿 DISCOUNT_STEP_AMOUNT 元，折 DISCOUNT_STEP_VALUE 元，
+ * 優惠碼折扣：以「商品金額」每滿 DISCOUNT_STEP_AMOUNT 元折抵一次，
  * 不足一階的零頭不計，不設上限。禮盒與運費不納入計算基準。
  *
- * ⚠️ 優惠碼本身「不在」這個檔案裡，也不在任何前端程式碼裡。
- * 網頁的程式碼所有人都看得到，優惠碼若寫在前端等於公開。
- * 實際的碼只存在 gas/Code.gs 的 PROMO_CODES，由後端驗證。
+ * 每一階折抵多少由「優惠碼本身」決定（例如某些碼每階折 50、某些折 100），
+ * 這個數字是客人輸入正確的碼之後，由後端回傳給前端的。
+ *
+ * ⚠️ 優惠碼與各自的折扣額度都「不在」這個檔案裡，也不在任何前端程式碼裡。
+ * 網頁的程式碼所有人都看得到，寫在前端等於公開。
+ * 實際的碼只存在 gas/Code.gs 的 PROMO_CODES，由後端驗證後才回傳額度。
  */
 export const DISCOUNT_STEP_AMOUNT = 1000;
-export const DISCOUNT_STEP_VALUE = 50;
 
-export function promoDiscount(itemsTotal: number): number {
-  if (itemsTotal <= 0) return 0;
-  return Math.floor(itemsTotal / DISCOUNT_STEP_AMOUNT) * DISCOUNT_STEP_VALUE;
+export function promoDiscount(itemsTotal: number, valuePerStep: number): number {
+  if (itemsTotal <= 0 || valuePerStep <= 0) return 0;
+  return Math.floor(itemsTotal / DISCOUNT_STEP_AMOUNT) * valuePerStep;
 }
 
 /** 達到此包數即免運費 */
@@ -209,7 +211,8 @@ export function calcOrder(
   quantities: Quantities,
   packaging: Packaging,
   giftBoxes: number,
-  promoApplied = false,
+  /** 優惠碼每一階折抵的金額，0 代表未套用優惠碼 */
+  promoValuePerStep = 0,
 ): OrderTotals {
   const packs = PRODUCTS.reduce((sum, p) => sum + Math.max(0, quantities[p.id] || 0), 0);
   const fillets = totalFillets(quantities);
@@ -222,7 +225,7 @@ export function calcOrder(
   const itemsTotal = packs * PRICE_PER_KG;
   const giftTotal = extraBoxes * GIFT_BOX_PRICE;
   const shipping = shippingFee(packs);
-  const discount = promoApplied ? promoDiscount(itemsTotal) : 0;
+  const discount = promoDiscount(itemsTotal, promoValuePerStep);
 
   return {
     packs,

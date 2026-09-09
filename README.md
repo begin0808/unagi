@@ -51,8 +51,11 @@ npm run preview  # 預覽建置結果
 
 ### 優惠碼
 
-優惠碼只存在 `gas/Code.gs` 的 `PROMO_CODES`，**不可以寫進網站程式碼**——網頁原始碼是公開的。
-折扣規則（商品金額每滿 1,000 折 50）前後端各有一份，改動時兩邊都要改。
+優惠碼與各自的折扣額度只存在 `gas/Code.gs` 的 `PROMO_CODES`，
+**不可以寫進網站程式碼**——網頁原始碼是公開的。
+
+折扣公式是「商品金額每滿 `DISCOUNT_STEP_AMOUNT` 元折抵一次」，每一階折多少由碼決定；
+客人輸入正確的碼後，後端才把額度回傳給前端計算。金額仍以後端重算的結果為準。
 
 Apps Script 的部署網址寫在 `OrderForm.tsx` 的 `DEFAULT_ORDER_API_URL`，
 也可用環境變數 `VITE_ORDER_API_URL` 覆蓋（見 `.env.example`）。
