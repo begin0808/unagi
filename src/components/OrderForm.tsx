@@ -563,9 +563,9 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               onChange={(e) => setEmail(e.target.value)} placeholder="you@gmail.com" autoComplete="email" />
           </Field>
 
-          <Field id="of-note" label="備註" hint="選填，例如指定到貨日、發票抬頭">
+          <Field id="of-note" label="備註" hint="選填，例如希望的配送時段、發票抬頭">
             <textarea id="of-note" className={`${inputClass} min-h-[90px] resize-y`} value={note}
-              onChange={(e) => setNote(e.target.value)} placeholder="希望中秋節前收到" />
+              onChange={(e) => setNote(e.target.value)} placeholder="白天無人收件，請晚上配送" />
           </Field>
 
           {/* honeypot：以 CSS 隱藏，機器人才會填 */}
