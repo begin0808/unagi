@@ -463,8 +463,8 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
 
                 <div className="text-stone-400 text-xs mt-2.5 leading-relaxed space-y-1.5">
                   <p>
-                    每條鰻魚都是單獨真空包裝，一個禮盒約可裝 {GIFT_BOX_CAPACITY}，
-                    請依要分送的對象人數選擇。
+                    每條鰻魚都是單獨真空包裝，一個禮盒約可裝 {GIFT_BOX_CAPACITY}
+                    （大條魚約 3 條、小條魚約 4 條），請依要分送的對象人數選擇。
                   </p>
                   <p>
                     <strong className="text-green-400">免費額度為購買公斤數</strong>
