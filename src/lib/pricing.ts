@@ -19,17 +19,38 @@ export const PRICE_PER_KG = 1000;
 export const ORIGINAL_PRICE_PER_KG = 1200;
 
 /**
- * 送禮禮盒：免費附贈，不再另外收費。
+ * 送禮禮盒。
  *
- * 一個禮盒可裝 3~4 包，所以「需要幾個」取決於要送幾個對象，
- * 而對象數最多不會超過包數（一包無法拆給兩個人），
- * 因此購買包數就是天然的數量上限，不需要另外訂規則。
+ * 每條鰻魚都是單獨真空包裝，一個禮盒約可裝 3~4 條。
+ * 因此「需要幾個禮盒」取決於要分送幾位對象，與買了幾公斤沒有直接關係：
+ * 買 2 公斤小條魚（8 條）若要分送三個人，就需要 3 個禮盒。
+ *
+ * 規則：
+ *   免費額度＝購買公斤數（1 公斤約可裝滿 1 個禮盒）
+ *   數量上限＝總條數（極端情況一條一盒，不可能再更多）
+ *   超過免費額度的部分，每個加購 GIFT_BOX_PRICE 元
  */
-export const GIFT_BOX_CAPACITY = '3~4 包';
+export const GIFT_BOX_CAPACITY = '3~4 條';
 
-/** 免費禮盒的數量上限：一包最多配一個 */
-export function maxGiftBoxes(packs: number): number {
+/** 加購禮盒單價 */
+export const GIFT_BOX_PRICE = 50;
+
+/** 免費禮盒額度：依購買公斤數 */
+export function freeGiftBoxes(packs: number): number {
   return Math.max(0, packs);
+}
+
+/** 禮盒數量上限：依總條數 */
+export function maxGiftBoxes(fillets: number): number {
+  return Math.max(0, fillets);
+}
+
+/** 訂單的總條數（每條各自真空包裝） */
+export function totalFillets(quantities: Quantities): number {
+  return PRODUCTS.reduce(
+    (sum, p) => sum + Math.max(0, quantities[p.id] || 0) * p.fillets,
+    0,
+  );
 }
 
 export type Packaging = 'self' | 'gift';
@@ -166,8 +187,16 @@ export interface OrderTotals {
   shipping: number;
   discount: number;
   total: number;
-  /** 實際附贈的禮盒數，已依包數上限修正過 */
+  /** 總條數，每條各自真空包裝 */
+  fillets: number;
+  /** 實際成立的禮盒數，已依上限修正過 */
   giftBoxes: number;
+  /** 其中免費的數量 */
+  freeBoxes: number;
+  /** 其中需要加購的數量 */
+  extraBoxes: number;
+  /** 加購禮盒的金額 */
+  giftTotal: number;
   /** 目前可選的禮盒數量上限 */
   maxBoxes: number;
   /** 還差幾包才免運，0 代表已免運或尚未選購 */
@@ -181,11 +210,15 @@ export function calcOrder(
   promoApplied = false,
 ): OrderTotals {
   const packs = PRODUCTS.reduce((sum, p) => sum + Math.max(0, quantities[p.id] || 0), 0);
-  const maxBoxes = maxGiftBoxes(packs);
-  // 上限一律在這裡夾住：包數減少時，先前選的禮盒數不能超過新的上限
+  const fillets = totalFillets(quantities);
+  const maxBoxes = maxGiftBoxes(fillets);
+  // 上限一律在這裡夾住：數量減少時，先前選的禮盒數不能超過新的上限
   const boxes = packaging === 'gift' ? Math.min(Math.max(0, giftBoxes || 0), maxBoxes) : 0;
+  const freeBoxes = Math.min(boxes, freeGiftBoxes(packs));
+  const extraBoxes = Math.max(0, boxes - freeBoxes);
 
   const itemsTotal = packs * PRICE_PER_KG;
+  const giftTotal = extraBoxes * GIFT_BOX_PRICE;
   const shipping = shippingFee(packs);
   const discount = promoApplied ? promoDiscount(itemsTotal) : 0;
 
@@ -194,8 +227,12 @@ export function calcOrder(
     itemsTotal,
     shipping,
     discount,
-    total: itemsTotal + shipping - discount,
+    total: itemsTotal + giftTotal + shipping - discount,
+    fillets,
     giftBoxes: boxes,
+    freeBoxes,
+    extraBoxes,
+    giftTotal,
     maxBoxes,
     packsToFreeShipping:
       packs > 0 && packs < FREE_SHIPPING_PACKS ? FREE_SHIPPING_PACKS - packs : 0,

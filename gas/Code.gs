@@ -64,12 +64,25 @@ const DISCOUNT_STEP_VALUE = 50;
 const PRICE_PER_KG = 1000;
 
 /**
- * 送禮禮盒免費附贈，數量上限為購買包數（一包最多配一個）。
- * 一個禮盒可裝 3~4 包，所以需要幾個取決於要送幾位對象，
- * 而對象數不可能超過包數。
+ * 送禮禮盒。每條鰻魚都是單獨真空包裝，一個禮盒約可裝 3~4 條。
+ *
+ *   免費額度＝購買公斤數
+ *   數量上限＝總條數（極端情況一條一盒）
+ *   超過免費額度的部分，每個加購 GIFT_BOX_PRICE 元
+ *
+ * 需與網站 src/lib/pricing.ts 保持一致。
  */
-function maxGiftBoxes(packs) {
+const GIFT_BOX_PRICE = 50;
+
+/** 每個規格一公斤有幾條，用來算總條數 */
+const FILLETS_PER_PACK = { A: 3, B: 4, C: 5 };
+
+function freeGiftBoxes(packs) {
   return Math.max(0, packs);
+}
+
+function maxGiftBoxes(fillets) {
+  return Math.max(0, fillets);
 }
 
 const SPEC_NAMES = {
@@ -125,13 +138,16 @@ function doPost(e) {
     const qb = toCount(q.B);
     const qc = toCount(q.C);
     const packs = qa + qb + qc;
+    const fillets = qa * FILLETS_PER_PACK.A + qb * FILLETS_PER_PACK.B + qc * FILLETS_PER_PACK.C;
 
-    // 包裝方式：只有「送禮」才附禮盒，且數量不得超過包數。
+    // 包裝方式：只有「送禮」才附禮盒，數量不得超過總條數。
     // 前端已經夾過一次，這裡再夾一次——瀏覽器送來的數字不能採信。
     const packaging = data.packaging === 'gift' ? 'gift' : 'self';
     const boxes = packaging === 'gift'
-      ? Math.min(toCount(data.giftBoxes), maxGiftBoxes(packs))
+      ? Math.min(toCount(data.giftBoxes), maxGiftBoxes(fillets))
       : 0;
+    const freeBoxes = Math.min(boxes, freeGiftBoxes(packs));
+    const extraBoxes = Math.max(0, boxes - freeBoxes);
 
     if (!name) return json({ ok: false, message: '缺少收件人姓名' });
     if (!phone) return json({ ok: false, message: '缺少聯絡電話' });
@@ -144,6 +160,7 @@ function doPost(e) {
 
     // 金額一律由後端重算
     const itemsTotal = packs * PRICE_PER_KG;
+    const giftTotal = extraBoxes * GIFT_BOX_PRICE;
     const shipping = shippingFee(packs);
 
     // 優惠碼再驗一次：前端說「已套用」不算數，這裡說了才算
@@ -156,7 +173,7 @@ function doPost(e) {
       discount = promoDiscount_(itemsTotal);
     }
 
-    const total = itemsTotal + shipping - discount;
+    const total = itemsTotal + giftTotal + shipping - discount;
 
     // 用鎖避免同時下單時訂單編號重複
     const lock = LockService.getScriptLock();
@@ -172,7 +189,7 @@ function doPost(e) {
       sheet.appendRow([
         orderNo, now, name, phone, address, email,
         qa, qb, qc, packs, packaging === 'gift' ? '送禮' : '自用', boxes,
-        itemsTotal, 0, shipping, promoCode, discount,
+        itemsTotal, giftTotal, shipping, promoCode, discount,
         total, note, '待確認',
       ]);
     } finally {
@@ -183,6 +200,7 @@ function doPost(e) {
       orderNo: orderNo, time: now, name: name, phone: phone, address: address,
       email: email, note: note, qa: qa, qb: qb, qc: qc, packs: packs, boxes: boxes,
       itemsTotal: itemsTotal, packaging: packaging, shipping: shipping,
+      freeBoxes: freeBoxes, extraBoxes: extraBoxes, giftTotal: giftTotal,
       promoCode: promoCode, discount: discount, total: total,
     };
 
@@ -357,7 +375,11 @@ function itemLines_(o) {
   if (o.qa) rows.push('規格 A ' + SPEC_NAMES.A + ' × ' + o.qa + '　' + money_(o.qa * PRICE_PER_KG));
   if (o.qb) rows.push('規格 B ' + SPEC_NAMES.B + ' × ' + o.qb + '　' + money_(o.qb * PRICE_PER_KG));
   if (o.qc) rows.push('規格 C ' + SPEC_NAMES.C + ' × ' + o.qc + '　' + money_(o.qc * PRICE_PER_KG));
-  if (o.boxes) rows.push('送禮禮盒 × ' + o.boxes + '　免費附贈');
+  if (o.boxes) {
+    rows.push('送禮禮盒 × ' + o.boxes +
+      '（免費 ' + o.freeBoxes + (o.extraBoxes ? '、加購 ' + o.extraBoxes : '') + '）' +
+      '　' + (o.giftTotal > 0 ? money_(o.giftTotal) : '免費附贈'));
+  }
   return rows.join('\n');
 }
 
@@ -375,7 +397,10 @@ function orderBody_(o) {
     itemLines_(o),
     '',
     '商品金額：' + money_(o.itemsTotal),
-    '包裝方式：' + (o.packaging === 'gift' ? '送禮（附贈禮盒 ' + o.boxes + ' 個）' : '自用（不附禮盒）'),
+    '包裝方式：' + (o.packaging === 'gift'
+      ? '送禮（禮盒 ' + o.boxes + ' 個，其中免費 ' + o.freeBoxes +
+        (o.extraBoxes ? '、加購 ' + o.extraBoxes + ' 個 ' + money_(o.giftTotal) : '') + '）'
+      : '自用（不附禮盒）'),
     '運費（共 ' + o.packs + ' 公斤）：' + (o.shipping === 0 ? '免運費' : money_(o.shipping)),
     o.discount > 0 ? '優惠碼折抵（' + o.promoCode + '）：-' + money_(o.discount) : '',
     '應付總金額：' + money_(o.total),

@@ -4,7 +4,8 @@ import {
   Loader2, X, ExternalLink, ClipboardList, Ticket, CheckCircle, ChevronRight, Leaf,
 } from 'lucide-react';
 import {
-  SPECS, PRICE_PER_KG, SHIPPING_TIERS, FREE_SHIPPING_PACKS, GIFT_BOX_CAPACITY,
+  SPECS, PRICE_PER_KG, SHIPPING_TIERS, FREE_SHIPPING_PACKS,
+  GIFT_BOX_CAPACITY, GIFT_BOX_PRICE,
   calcOrder, currency,
   type Quantities, type SpecId, type Packaging,
 } from '../lib/pricing';
@@ -430,11 +431,19 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-white font-bold text-sm">需要幾個禮盒？</div>
-                    <p className="text-stone-400 text-xs mt-0.5">
-                      {totals.packs > 0
-                        ? `最多 ${totals.maxBoxes} 個`
-                        : '請先選擇商品數量'}
-                    </p>
+                    {totals.packs > 0 ? (
+                      <p className="text-xs mt-0.5">
+                        <span className="text-green-400">免費 {totals.freeBoxes} 個</span>
+                        {totals.extraBoxes > 0 && (
+                          <span className="text-amber-300">
+                            ，加購 {totals.extraBoxes} 個 {currency(totals.giftTotal)}
+                          </span>
+                        )}
+                        <span className="text-stone-500">　最多 {totals.maxBoxes} 個</span>
+                      </p>
+                    ) : (
+                      <p className="text-stone-400 text-xs mt-0.5">請先選擇商品數量</p>
+                    )}
                   </div>
                   <Stepper
                     label="禮盒數量"
@@ -453,7 +462,15 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 )}
 
                 <div className="text-stone-400 text-xs mt-2.5 leading-relaxed space-y-1.5">
-                  <p>一個禮盒可裝 {GIFT_BOX_CAPACITY}，請依要送的對象人數選擇。</p>
+                  <p>
+                    每條鰻魚都是單獨真空包裝，一個禮盒約可裝 {GIFT_BOX_CAPACITY}，
+                    請依要分送的對象人數選擇。
+                  </p>
+                  <p>
+                    <strong className="text-green-400">免費額度為購買公斤數</strong>
+                    （買 2 公斤即免費附 2 個）；需要更多可加購，
+                    每個 {currency(GIFT_BOX_PRICE)}。
+                  </p>
                   <p className="text-amber-300/90">
                     禮盒會分開包裝、隨箱一起寄出，<strong className="text-amber-200">不會預先把鰻魚裝進去</strong>——
                     紙盒與冷凍品放在一起容易受潮變軟。請您收到後冷凍保存，要送禮前再自行裝盒。
@@ -571,8 +588,17 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
 
               {totals.giftBoxes > 0 && (
                 <div className="flex justify-between items-baseline text-stone-300">
-                  <span>送禮禮盒<span className="text-stone-500"> × {totals.giftBoxes}</span></span>
-                  <span className="font-bold text-green-400 whitespace-nowrap">免費</span>
+                  <span>
+                    送禮禮盒<span className="text-stone-500"> × {totals.giftBoxes}</span>
+                    {totals.extraBoxes > 0 && (
+                      <span className="text-stone-500 text-xs">（免費 {totals.freeBoxes}＋加購 {totals.extraBoxes}）</span>
+                    )}
+                  </span>
+                  <span className="font-bold whitespace-nowrap">
+                    {totals.giftTotal > 0
+                      ? <span className="text-white">{currency(totals.giftTotal)}</span>
+                      : <span className="text-green-400">免費</span>}
+                  </span>
                 </div>
               )}
 
@@ -753,8 +779,17 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                     </div>
                     {totals.giftBoxes > 0 && (
                       <div className="flex justify-between text-stone-300">
-                        <span>送禮禮盒 × {totals.giftBoxes}</span>
-                        <span className="text-green-400 font-bold">免費附贈</span>
+                        <span>
+                          送禮禮盒 × {totals.giftBoxes}
+                          {totals.extraBoxes > 0 && (
+                            <span className="text-stone-500 text-xs">（免費 {totals.freeBoxes}＋加購 {totals.extraBoxes}）</span>
+                          )}
+                        </span>
+                        <span className="font-bold">
+                          {totals.giftTotal > 0
+                            ? <span className="text-white">{currency(totals.giftTotal)}</span>
+                            : <span className="text-green-400">免費附贈</span>}
+                        </span>
                       </div>
                     )}
                     <div className="flex justify-between text-stone-300 pt-2 border-t border-white/10">
