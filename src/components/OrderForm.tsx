@@ -2,12 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Minus, Plus, Gift, Truck, ShoppingBag, CheckCircle2, AlertTriangle,
   Loader2, X, ExternalLink, ClipboardList, Ticket, CheckCircle, ChevronRight, Leaf,
+  Wallet, Landmark, Banknote, Copy, Check, MapPin,
 } from 'lucide-react';
 import {
-  SPECS, PRICE_PER_KG, SHIPPING_TIERS, FREE_SHIPPING_PACKS,
+  SPECS, PRICE_PER_KG, SHIPPING_TIERS, FREE_SHIPPING_PACKS, PAYMENT_DEADLINE_HOURS,
   GIFT_BOX_CAPACITY, GIFT_BOX_PRICE,
   calcOrder, currency,
-  type Quantities, type SpecId, type Packaging,
+  type Quantities, type SpecId, type Packaging, type Delivery,
 } from '../lib/pricing';
 
 /**
@@ -28,6 +29,16 @@ const FALLBACK_FORM_URL =
 
 type Step = 'form' | 'confirm' | 'sending' | 'done' | 'error';
 type PromoState = 'idle' | 'checking' | 'ok' | 'bad';
+/** 付款方式：銀行轉帳，或取貨時付現（僅限自取／面交） */
+type Payment = 'transfer' | 'cash';
+
+/** 收款帳戶，由後端在轉帳訂單成立後回傳；帳號本身只存在 gas/Code.gs */
+interface BankInfo {
+  bankCode: string;
+  bankName: string;
+  account: string;
+  holder: string;
+}
 
 interface Props {
   quantities: Quantities;
@@ -122,6 +133,17 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   const [orderNo, setOrderNo] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
+  // 取貨與付款
+  const [delivery, setDelivery] = useState<Delivery>('ship');
+  const [pickupNote, setPickupNote] = useState('');
+  const [payment, setPayment] = useState<Payment>('transfer');
+  const [last5, setLast5] = useState('');
+  // 訂單成立後由後端回傳，顯示在完成畫面
+  const [bankInfo, setBankInfo] = useState<BankInfo | null>(null);
+  const [payDeadline, setPayDeadline] = useState('');
+  const [finalTotal, setFinalTotal] = useState(0);
+  const [copied, setCopied] = useState(false);
+
   // 優惠碼：輸入框內容與「已成功套用」的碼分開存，
   // 客人改動輸入框時要立刻取消已套用狀態，避免看到與實際不符的金額。
   const [promoInput, setPromoInput] = useState('');
@@ -169,8 +191,8 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     summaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   const totals = useMemo(
-    () => calcOrder(quantities, packaging, giftBoxes, appliedStep),
-    [quantities, packaging, giftBoxes, appliedStep],
+    () => calcOrder(quantities, packaging, giftBoxes, appliedStep, delivery),
+    [quantities, packaging, giftBoxes, appliedStep, delivery],
   );
 
   // 上限縮小時把選擇拉回合法範圍，並讓客人看到被調整了
@@ -191,6 +213,23 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setPackaging(v);
     setBoxAdjusted(false);
     if (v === 'gift' && giftBoxes < 1) setGiftBoxes(1);
+  };
+
+  // 付現只限自取／面交：改回宅配時，付款方式一併改回轉帳
+  const chooseDelivery = (v: Delivery) => {
+    setDelivery(v);
+    if (v === 'ship' && payment === 'cash') setPayment('transfer');
+  };
+
+  const copyAccount = async () => {
+    if (!bankInfo) return;
+    try {
+      await navigator.clipboard.writeText(bankInfo.account);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // 部分瀏覽器不允許寫入剪貼簿，帳號本身仍可長按選取
+    }
   };
 
   /**
@@ -247,13 +286,18 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     if (!name.trim()) next.name = '請填寫收件人姓名';
     if (!phone.trim()) next.phone = '請填寫聯絡電話';
     else if (!/^[\d\-+()\s]{8,20}$/.test(phone.trim())) next.phone = '電話格式看起來不正確';
-    if (!address.trim()) next.address = '請填寫收件地址';
-    // 自取／面交不需要地址，長度檢查要放行
-    else if (!/自取|面交/.test(address) && address.trim().length < 8)
-      next.address = '請填寫完整地址（含縣市與門牌號碼）；自取或面交請直接填「自取」或「面交」';
+    if (delivery === 'ship') {
+      if (!address.trim()) next.address = '請填寫收件地址';
+      else if (/自取|面交/.test(address))
+        next.address = '要自取或面交的話，請在上方「取貨方式」選擇「自取／面交」';
+      else if (address.trim().length < 8)
+        next.address = '請填寫完整地址（含縣市與門牌號碼）';
+    }
     if (!email.trim()) next.email = '請填寫 Email，我們會寄送訂單確認信給您核對';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
       next.email = 'Email 格式看起來不正確';
+    if (payment === 'transfer' && last5.trim() && !/^[0-9]{5}$/.test(last5.trim()))
+      next.last5 = '請填寫 5 位數字；不確定的話可以先留空，轉帳後再回覆確認信告知';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -276,13 +320,16 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
         body: JSON.stringify({
           name: name.trim(),
           phone: phone.trim(),
-          address: address.trim(),
+          address: (delivery === 'ship' ? address : pickupNote).trim(),
           email: email.trim(),
           note: note.trim(),
           quantities,
           packaging,
           giftBoxes: totals.giftBoxes,
           promoCode: appliedCode,
+          delivery,
+          payment,
+          last5: payment === 'transfer' ? last5.trim() : '',
           company, // honeypot
         }),
       });
@@ -291,6 +338,10 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
       if (!data || !data.ok) throw new Error(data?.message || '訂單未能成立');
 
       setOrderNo(data.orderNo || '');
+      setBankInfo(data.bank && data.bank.account ? data.bank : null);
+      setPayDeadline(data.payDeadline || '');
+      // 以後端重算的金額為準
+      setFinalTotal(Number(data.total) || totals.total);
       setStep('done');
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : '未知錯誤');
@@ -309,6 +360,14 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setAppliedCode('');
     setAppliedStep(0);
     setPromoState('idle');
+    setDelivery('ship');
+    setPickupNote('');
+    setPayment('transfer');
+    setLast5('');
+    setBankInfo(null);
+    setPayDeadline('');
+    setFinalTotal(0);
+    setCopied(false);
     setStep('form');
   };
 
@@ -325,6 +384,67 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
             您的訂單編號：<span className="text-amber-400 font-bold tracking-wider">{orderNo}</span>
           </p>
         )}
+        {payment === 'transfer' ? (
+          <div className="max-w-md mx-auto my-6 text-left bg-stone-900 rounded-2xl border border-amber-500/40 p-5">
+            <div className="flex items-center gap-2 text-amber-300 font-bold mb-3">
+              <Landmark size={18} /> 請匯款 {currency(finalTotal)}
+            </div>
+            {bankInfo ? (
+              <>
+                <dl className="space-y-2 text-sm">
+                  <div className="flex gap-3">
+                    <dt className="text-stone-500 w-12 flex-shrink-0">銀行</dt>
+                    <dd className="text-stone-200">
+                      {bankInfo.bankCode && <span className="text-amber-300 font-bold">（{bankInfo.bankCode}）</span>}
+                      {bankInfo.bankName}
+                    </dd>
+                  </div>
+                  <div className="flex gap-3 items-center">
+                    <dt className="text-stone-500 w-12 flex-shrink-0">帳號</dt>
+                    <dd className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                      <span className="text-white font-bold text-base sm:text-lg tracking-wide sm:tracking-wider select-all whitespace-nowrap">{bankInfo.account}</span>
+                      <button
+                        type="button"
+                        onClick={copyAccount}
+                        className="flex-shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-stone-700 hover:bg-stone-600 text-stone-100 transition-colors"
+                      >
+                        {copied ? <><Check size={13} /> 已複製</> : <><Copy size={13} /> 複製</>}
+                      </button>
+                    </dd>
+                  </div>
+                  <div className="flex gap-3">
+                    <dt className="text-stone-500 w-12 flex-shrink-0">戶名</dt>
+                    <dd className="text-stone-200">{bankInfo.holder}</dd>
+                  </div>
+                </dl>
+                {payDeadline && (
+                  <p className="text-amber-300 text-sm mt-3 pt-3 border-t border-white/10">
+                    請於 <strong className="text-amber-200">{payDeadline}</strong> 前完成匯款
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-stone-300 text-sm leading-relaxed">
+                我們會盡快與您聯繫，提供匯款帳號。請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成匯款。
+              </p>
+            )}
+            <p className="text-stone-400 text-xs leading-relaxed mt-3">
+              {last5.trim()
+                ? <>已記錄您的匯款帳號後五碼 <span className="text-stone-200">{last5.trim()}</span>，入帳後我們會依此核對。</>
+                : <>下單時未填匯款帳號後五碼的話，轉帳後請回覆確認信告知，方便我們核對。</>}
+            </p>
+          </div>
+        ) : (
+          <div className="max-w-md mx-auto my-6 text-left bg-stone-900 rounded-2xl border border-green-500/40 p-5">
+            <div className="flex items-center gap-2 text-green-400 font-bold mb-2">
+              <Banknote size={18} /> 取貨時付現 {currency(finalTotal)}
+            </div>
+            <p className="text-stone-300 text-sm leading-relaxed">
+              我們會盡快與您聯繫，約定自取或面交的時間與地點。
+            </p>
+          </div>
+        )}
+
         {/* 每個子句各自 inline-block：避免 JSX 換行產生的空白造成斷行，
             也讓窄螢幕只會在子句之間換行，不會把詞拆開 */}
         <p className="text-stone-400 text-sm sm:text-base leading-relaxed max-w-md mx-auto mb-8 [text-wrap:balance]">
@@ -332,8 +452,6 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           <span className="inline-block">請收信核對訂購內容。</span>
           <span className="inline-block">若有任何需要更正的地方，</span>
           <span className="inline-block">直接回覆該封信件告知我們即可。</span>
-          <span className="inline-block">我們也會盡快由專人與您聯繫，</span>
-          <span className="inline-block">確認付款方式與出貨時間。</span>
         </p>
         <button
           onClick={resetAll}
@@ -484,7 +602,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                     每個 {currency(GIFT_BOX_PRICE)}。
                   </p>
                   <p className="text-amber-300/90">
-                    禮盒會分開包裝、隨箱一起寄出，<strong className="text-amber-200">不會預先把鰻魚裝進去</strong>——
+                    禮盒會分開包裝、{delivery === 'pickup' ? '取貨時一併交給您' : '隨箱一起寄出'}，<strong className="text-amber-200">不會預先把鰻魚裝進去</strong>——
                     紙盒與冷凍品放在一起容易受潮變軟。請您收到後冷凍保存，要送禮前再自行裝盒。
                   </p>
                   <p>禮盒與商品寄至同一個地址；需分別寄給不同收件人請分開下單。</p>
@@ -541,6 +659,47 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
         <div className={`bg-stone-800 rounded-2xl border border-white/10 p-5 sm:p-6 space-y-4 shadow-lg ${configured ? '' : 'hidden'}`}>
           <h3 className="text-white font-bold text-lg mb-1">收件資料</h3>
 
+          {/* 取貨方式 */}
+          <div>
+            <div className="text-sm font-bold text-stone-200 mb-2">取貨方式</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => chooseDelivery('ship')}
+                aria-pressed={delivery === 'ship'}
+                className={`text-left p-3.5 rounded-xl border transition-colors ${
+                  delivery === 'ship'
+                    ? 'border-amber-400/60 bg-amber-500/10'
+                    : 'border-white/10 bg-stone-900/60 hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 text-white font-bold text-sm">
+                  <Truck size={15} className="text-amber-400" /> 黑貓冷凍宅配
+                </div>
+                <p className="text-stone-400 text-xs mt-1 leading-relaxed">
+                  全程低溫配送到府，運費依公斤數計算，滿 {FREE_SHIPPING_PACKS} 公斤免運。
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => chooseDelivery('pickup')}
+                aria-pressed={delivery === 'pickup'}
+                className={`text-left p-3.5 rounded-xl border transition-colors ${
+                  delivery === 'pickup'
+                    ? 'border-green-400/60 bg-green-500/10'
+                    : 'border-white/10 bg-stone-900/60 hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 text-white font-bold text-sm">
+                  <MapPin size={15} className="text-green-400" /> 自取／面交
+                </div>
+                <p className="text-stone-400 text-xs mt-1 leading-relaxed">
+                  到養鰻場自取或約定面交，免運費；時間地點由專人與您聯繫確認。
+                </p>
+              </button>
+            </div>
+          </div>
+
           <Field id="of-name" label="收件人姓名" required error={errors.name}>
             <input id="of-name" className={inputClass} value={name}
               onChange={(e) => setName(e.target.value)} placeholder="王小明" autoComplete="name" />
@@ -551,12 +710,20 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               onChange={(e) => setPhone(e.target.value)} placeholder="0912-345-678" autoComplete="tel" />
           </Field>
 
-          <Field id="of-address" label="收件地址" required error={errors.address}
-            hint="黑貓冷凍宅配；自取或面交請直接填「自取」或「面交」">
-            <input id="of-address" className={inputClass} value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="臺南市 710 永康區○○路○○巷 100 號" autoComplete="street-address" />
-          </Field>
+          {delivery === 'ship' ? (
+            <Field id="of-address" label="收件地址" required error={errors.address}
+              hint="黑貓冷凍宅配，請填寫完整地址">
+              <input id="of-address" className={inputClass} value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="臺南市 710 永康區○○路○○巷 100 號" autoComplete="street-address" />
+            </Field>
+          ) : (
+            <Field id="of-pickup" label="自取／面交說明" hint="選填，例如希望的日期時段或面交地點">
+              <input id="of-pickup" className={inputClass} value={pickupNote}
+                onChange={(e) => setPickupNote(e.target.value)}
+                placeholder="希望週六下午到養鰻場自取" autoComplete="off" />
+            </Field>
+          )}
 
           <Field id="of-email" label="Email" required hint="訂單確認信會寄到這裡，請確認填寫正確" error={errors.email}>
             <input id="of-email" className={inputClass} value={email} type="email"
@@ -574,6 +741,67 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
             <input id="of-company" tabIndex={-1} autoComplete="off" value={company}
               onChange={(e) => setCompany(e.target.value)} />
           </div>
+        </div>
+
+        {/* 付款方式 */}
+        <div className={`bg-stone-800 rounded-2xl border border-white/10 p-5 sm:p-6 shadow-lg ${configured ? '' : 'hidden'}`}>
+          <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
+            <Wallet size={20} className="text-amber-400" /> 付款方式
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setPayment('transfer')}
+              aria-pressed={payment === 'transfer'}
+              className={`text-left p-3.5 rounded-xl border transition-colors ${
+                payment === 'transfer'
+                  ? 'border-amber-400/60 bg-amber-500/10'
+                  : 'border-white/10 bg-stone-900/60 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center gap-1.5 text-white font-bold text-sm">
+                <Landmark size={15} className="text-amber-400" /> 銀行轉帳
+              </div>
+              <p className="text-stone-400 text-xs mt-1 leading-relaxed">
+                ATM 或網路銀行。送出訂單後會提供匯款帳號，請於 {PAYMENT_DEADLINE_HOURS} 小時內完成匯款。
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { if (delivery === 'pickup') setPayment('cash'); }}
+              disabled={delivery !== 'pickup'}
+              aria-pressed={payment === 'cash'}
+              className={`text-left p-3.5 rounded-xl border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                payment === 'cash'
+                  ? 'border-green-400/60 bg-green-500/10'
+                  : 'border-white/10 bg-stone-900/60 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center gap-1.5 text-white font-bold text-sm">
+                <Banknote size={15} className="text-green-400" /> 取貨時付現
+              </div>
+              <p className="text-stone-400 text-xs mt-1 leading-relaxed">
+                {delivery === 'pickup'
+                  ? '自取或面交時當面付款。'
+                  : '僅限選擇「自取／面交」的訂單。'}
+              </p>
+            </button>
+          </div>
+
+          {payment === 'transfer' && (
+            <div className="mt-4">
+              <Field id="of-last5" label="匯款帳號後五碼" hint="選填，方便我們核對入帳" error={errors.last5}>
+                <input id="of-last5" className={`${inputClass} tracking-[0.3em]`} value={last5}
+                  onChange={(e) => setLast5(e.target.value.replace(/[^0-9]/g, '').slice(0, 5))}
+                  inputMode="numeric" maxLength={5} placeholder="12345" autoComplete="off" />
+              </Field>
+              <p className="text-stone-400 text-xs mt-2 leading-relaxed">
+                已確定要用哪個帳戶轉帳可以先填；不確定、用家人帳戶或 ATM 無摺存款的話，轉帳後回覆確認信告知即可。
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -621,10 +849,12 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               <div className="flex justify-between items-baseline text-stone-300 pt-2.5 border-t border-white/10">
                 <span className="flex items-center gap-1.5">
                   <Truck size={15} className="text-amber-400" /> 運費
-                  <span className="text-stone-500 text-xs">（共 {totals.packs} 公斤）</span>
+                  <span className="text-stone-500 text-xs">
+                    {delivery === 'pickup' ? '（自取／面交）' : `（共 ${totals.packs} 公斤）`}
+                  </span>
                 </span>
                 <span className="font-bold whitespace-nowrap">
-                  {totals.packs >= FREE_SHIPPING_PACKS
+                  {totals.packs > 0 && totals.shipping === 0
                     ? <span className="text-green-400">免運費</span>
                     : <span className="text-white">{currency(totals.shipping)}</span>}
                 </span>
@@ -664,7 +894,9 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                   確認訂單內容 <ShoppingBag size={20} />
                 </button>
                 <p className="text-stone-400 text-[11px] leading-relaxed mt-3 text-center">
-                  送出後將由專人與您聯繫確認付款方式與出貨時間，現階段不需線上付款。
+                  {payment === 'transfer'
+                    ? `送出後會提供匯款帳號，請於 ${PAYMENT_DEADLINE_HOURS} 小時內完成匯款，確認入帳後安排出貨。`
+                    : '請於自取或面交時付現，我們會與您聯繫約定時間地點。'}
                 </p>
               </>
             ) : (
@@ -698,6 +930,10 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                   </span>
                 </li>
               ))}
+              <li className="flex justify-between gap-3 pt-1.5 border-t border-white/10">
+                <span>自取／面交</span>
+                <span className="font-bold whitespace-nowrap text-green-400">免運費</span>
+              </li>
             </ul>
           </div>
         </div>
@@ -805,7 +1041,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                       </div>
                     )}
                     <div className="flex justify-between text-stone-300 pt-2 border-t border-white/10">
-                      <span>運費（{totals.packs} 公斤）</span>
+                      <span>{delivery === 'pickup' ? '運費（自取／面交）' : `運費（${totals.packs} 公斤）`}</span>
                       <span className="font-bold">
                         {totals.shipping === 0 ? <span className="text-green-400">免運費</span> : currency(totals.shipping)}
                       </span>
@@ -825,7 +1061,11 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                   <dl className="bg-stone-900 rounded-xl p-4 space-y-2 text-stone-300 border border-white/10">
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">姓名</dt><dd>{name}</dd></div>
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">電話</dt><dd>{phone}</dd></div>
-                    <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">地址</dt><dd className="break-words">{address}</dd></div>
+                    <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">取貨</dt><dd>{delivery === 'pickup' ? '自取／面交（免運費）' : '黑貓冷凍宅配'}</dd></div>
+                    {delivery === 'ship'
+                      ? <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">地址</dt><dd className="break-words">{address}</dd></div>
+                      : pickupNote.trim() && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">說明</dt><dd className="break-words">{pickupNote}</dd></div>}
+                    <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">付款</dt><dd>{payment === 'cash' ? '取貨時付現' : '銀行轉帳'}{payment === 'transfer' && last5.trim() && `（後五碼 ${last5.trim()}）`}</dd></div>
                     {email && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">Email</dt><dd className="break-all">{email}</dd></div>}
                     {note && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">備註</dt><dd className="whitespace-pre-line break-words">{note}</dd></div>}
                   </dl>

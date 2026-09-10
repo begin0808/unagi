@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import OrderForm from './components/OrderForm';
 import {
-  PRODUCTS, EMPTY_QUANTITIES, shippingFaqLines, PRICE_PER_KG, currency,
+  PRODUCTS, EMPTY_QUANTITIES, shippingFaqLines, PRICE_PER_KG, PAYMENT_DEADLINE_HOURS, currency,
   type Quantities, type SpecId,
 } from './lib/pricing';
 import { PHONES, CONTACT_EMAIL, formatPhone, telHref, phoneListText } from './lib/contact';
@@ -23,6 +23,14 @@ const FAQS = [
       "我們一律使用「黑貓低溫冷凍宅配」全程保鮮直送：\n" +
       shippingFaqLines() +
       "\n確認訂單與款項後約 1～3 個工作天出貨。中秋等節慶檔期物流較繁忙，建議提早預訂以確保如期到貨。"
+  },
+  {
+    question: "付款方式有哪些？",
+    answer:
+      "宅配訂單請以銀行轉帳（ATM 或網路銀行）付款。送出訂單後，畫面與訂單確認信都會提供匯款帳號，\n" +
+      "請於下單後 " + PAYMENT_DEADLINE_HOURS + " 小時內完成匯款，確認入帳後即安排出貨。\n\n" +
+      "下單時可以先填匯款帳號後五碼，方便我們核對；若還不確定會用哪個帳戶轉帳，轉帳後直接回覆確認信告知即可。\n\n" +
+      "選擇自取或面交的訂單，除了轉帳之外，也可以在取貨時當面付現。自取與面交不經黑貓配送，免運費。"
   },
   {
     question: "保存方式為何？未開封可以冷凍保存多久？",
@@ -673,7 +681,7 @@ const App = () => {
                   <span className="inline-block">請至您填寫的 Email 收信核對；</span>
                   <span className="inline-block">內容有誤直接回覆該封信告知即可。</span>
                   <span className="inline-block">我們也會由專人與您聯繫，</span>
-                  <span className="inline-block">確認付款方式與出貨時間；</span>
+                  <span className="inline-block">確認出貨或取貨時間；</span>
                   <span className="inline-block">中秋等節慶檔期物流較繁忙，建議提早下單。</span>
                   <span className="inline-block">到貨時間、指定日期、自取或面交、</span>
                   <span className="inline-block">大量訂購與送禮包裝，</span>

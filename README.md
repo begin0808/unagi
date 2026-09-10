@@ -49,6 +49,13 @@ npm run preview  # 預覽建置結果
 規則在 `pricing.ts` 與 `gas/Code.gs` 各有一份，改動時兩邊都要改；
 前後端都會夾住上限並各自算一次金額，以後端為準。
 
+### 付款方式
+
+宅配訂單一律銀行轉帳；自取／面交的訂單可選轉帳或取貨時付現，且免運費。
+收款帳戶設定在 `gas/Code.gs` 的 `BANK_INFO`（建議只在 Apps Script 裡填），
+轉帳訂單成立後由後端回傳給網頁顯示，並寫進確認信。
+付款期限 `PAYMENT_DEADLINE_HOURS` 在 `pricing.ts` 與 `Code.gs` 各有一份，改動時兩邊都要改。
+
 ### 優惠碼
 
 優惠碼與各自的折扣額度只存在 `gas/Code.gs` 的 `PROMO_CODES`，

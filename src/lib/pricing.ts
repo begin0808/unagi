@@ -58,6 +58,18 @@ export function totalFillets(quantities: Quantities): number {
 export type Packaging = 'self' | 'gift';
 
 /**
+ * 取貨方式：黑貓冷凍宅配，或到養鰻場自取／與店家約定面交。
+ * 自取與面交不經過黑貓，運費一律為 0。
+ */
+export type Delivery = 'ship' | 'pickup';
+
+/**
+ * 銀行轉帳的付款期限（小時）。
+ * 需與 gas/Code.gs 的 PAYMENT_DEADLINE_HOURS 一致；實際截止時間由後端計算後回傳。
+ */
+export const PAYMENT_DEADLINE_HOURS = 48;
+
+/**
  * 優惠碼折扣：以「商品金額」每滿 DISCOUNT_STEP_AMOUNT 元折抵一次，
  * 不足一階的零頭不計，不設上限。禮盒與運費不納入計算基準。
  *
@@ -213,6 +225,8 @@ export function calcOrder(
   giftBoxes: number,
   /** 優惠碼每一階折抵的金額，0 代表未套用優惠碼 */
   promoValuePerStep = 0,
+  /** 取貨方式；自取／面交免運費 */
+  delivery: Delivery = 'ship',
 ): OrderTotals {
   const packs = PRODUCTS.reduce((sum, p) => sum + Math.max(0, quantities[p.id] || 0), 0);
   const fillets = totalFillets(quantities);
@@ -224,7 +238,7 @@ export function calcOrder(
 
   const itemsTotal = packs * PRICE_PER_KG;
   const giftTotal = extraBoxes * GIFT_BOX_PRICE;
-  const shipping = shippingFee(packs);
+  const shipping = delivery === 'pickup' ? 0 : shippingFee(packs);
   const discount = promoDiscount(itemsTotal, promoValuePerStep);
 
   return {
@@ -239,8 +253,11 @@ export function calcOrder(
     extraBoxes,
     giftTotal,
     maxBoxes,
+    // 自取／面交本來就免運，不需要提示「再買幾公斤免運」
     packsToFreeShipping:
-      packs > 0 && packs < FREE_SHIPPING_PACKS ? FREE_SHIPPING_PACKS - packs : 0,
+      delivery === 'ship' && packs > 0 && packs < FREE_SHIPPING_PACKS
+        ? FREE_SHIPPING_PACKS - packs
+        : 0,
   };
 }
 

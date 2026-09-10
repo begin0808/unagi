@@ -40,6 +40,28 @@ const NOTIFY_EMAIL = '';
 const SHOP_NAME = '興旺蒲燒鰻';
 
 /**
+ * 收款帳戶 —— 顧客選「銀行轉帳」時，送出訂單後的畫面與確認信會顯示這組帳號。
+ *
+ * 建議直接在 Apps Script 編輯器裡填寫，不要寫進 GitHub 上的 gas/Code.gs。
+ * 每次貼上新版程式碼後，記得把這裡重新填回去（跟 SPREADSHEET_ID、NOTIFY_EMAIL 一樣）。
+ *
+ * account 留空時不會顯示任何帳號，畫面與信件會改為「將由專人提供匯款帳號」，
+ * 不會出現空白或錯誤的帳號。
+ */
+const BANK_INFO = {
+  bankCode: '',   // 銀行代碼，例如 '000'
+  bankName: '',   // 銀行與分行，例如 '○○銀行 ○○分行'
+  account: '',    // 帳號（只填數字）
+  holder: '',     // 戶名
+};
+
+/** 轉帳訂單的付款期限（小時），需與網站 src/lib/pricing.ts 的 PAYMENT_DEADLINE_HOURS 一致 */
+const PAYMENT_DEADLINE_HOURS = 48;
+
+/** 試算表「處理狀態」欄的下拉選項（「待確認」保留給舊訂單） */
+const STATUS_OPTIONS = ['待付款', '待取貨', '已付款', '已出貨', '已完成', '已取消', '待確認'];
+
+/**
  * 優惠碼清單 —— 這是整套系統唯一存放優惠碼與折扣額度的地方。
  *
  * ⚠️ 絕對不要把優惠碼寫進網站的程式碼裡。
@@ -114,7 +136,7 @@ const HEADERS = [
   '訂單編號', '訂單時間', '姓名', '電話', '地址', 'Email',
   '規格A', '規格B', '規格C', '總公斤', '包裝方式', '禮盒數',
   '商品金額', '禮盒金額', '運費', '優惠碼', '折扣金額',
-  '總金額', '備註', '處理狀態',
+  '總金額', '取貨方式', '付款方式', '匯款後五碼', '備註', '處理狀態',
 ];
 
 /* ===================== 主要進入點 ===================== */
@@ -164,9 +186,15 @@ function doPost(e) {
     const freeBoxes = Math.min(boxes, freeGiftBoxes(packs));
     const extraBoxes = Math.max(0, boxes - freeBoxes);
 
+    // 取貨與付款：付現只限自取／面交，宅配一律轉帳（前端已限制，這裡再擋一次）
+    const delivery = data.delivery === 'pickup' ? 'pickup' : 'ship';
+    const payment = data.payment === 'cash' && delivery === 'pickup' ? 'cash' : 'transfer';
+    // 只留數字；若客人填了整串帳號，取最後五碼
+    const last5 = payment === 'transfer' ? String(data.last5 || '').replace(/[^0-9]/g, '').slice(-5) : '';
+
     if (!name) return json({ ok: false, message: '缺少收件人姓名' });
     if (!phone) return json({ ok: false, message: '缺少聯絡電話' });
-    if (!address) return json({ ok: false, message: '缺少收件地址' });
+    if (delivery === 'ship' && !address) return json({ ok: false, message: '缺少收件地址' });
     // Email 為必填：顧客要靠確認信核對訂單內容，避免到貨後爭議
     if (!email) return json({ ok: false, message: '缺少 Email' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ ok: false, message: 'Email 格式不正確' });
@@ -176,7 +204,7 @@ function doPost(e) {
     // 金額一律由後端重算
     const itemsTotal = packs * PRICE_PER_KG;
     const giftTotal = extraBoxes * GIFT_BOX_PRICE;
-    const shipping = shippingFee(packs);
+    const shipping = delivery === 'pickup' ? 0 : shippingFee(packs); // 自取／面交不經黑貓，免運
 
     // 優惠碼再驗一次：前端說「已套用」不算數，這裡說了才算
     const promoCode = normalizePromo_(data.promoCode);
@@ -202,15 +230,29 @@ function doPost(e) {
       now = new Date();
       orderNo = nextOrderNo_(sheet, now);
 
+      // 電話與後五碼前面加 '，強制以文字存入，避免開頭的 0 被試算表當成數字吃掉
       sheet.appendRow([
-        orderNo, now, name, phone, address, email,
+        orderNo, now, name, "'" + phone, address, email,
         qa, qb, qc, packs, packaging === 'gift' ? '送禮' : '自用', boxes,
         itemsTotal, giftTotal, shipping, promoCode, discount,
-        total, note, '待確認',
+        total,
+        delivery === 'pickup' ? '自取／面交' : '宅配',
+        payment === 'cash' ? '取貨時付現' : '銀行轉帳',
+        last5 ? "'" + last5 : '',
+        note,
+        payment === 'cash' ? '待取貨' : '待付款',
       ]);
     } finally {
       lock.releaseLock();
     }
+
+    const payDeadline = payment === 'transfer'
+      ? Utilities.formatDate(
+          new Date(now.getTime() + PAYMENT_DEADLINE_HOURS * 60 * 60 * 1000),
+          'Asia/Taipei', 'yyyy/MM/dd HH:mm')
+      : '';
+    // 帳號沒設定時不回傳，前端與信件會改為「由專人提供匯款帳號」
+    const bank = payment === 'transfer' && BANK_INFO.account ? BANK_INFO : null;
 
     const order = {
       orderNo: orderNo, time: now, name: name, phone: phone, address: address,
@@ -218,6 +260,7 @@ function doPost(e) {
       itemsTotal: itemsTotal, packaging: packaging, shipping: shipping,
       freeBoxes: freeBoxes, extraBoxes: extraBoxes, giftTotal: giftTotal,
       promoCode: promoCode, discount: discount, total: total,
+      delivery: delivery, payment: payment, last5: last5, payDeadline: payDeadline, bank: bank,
     };
 
     // 寄信失敗不影響訂單成立
@@ -226,7 +269,10 @@ function doPost(e) {
       try { notifyCustomer_(order); } catch (err) { console.error('客戶確認信寄送失敗：' + err); }
     }
 
-    return json({ ok: true, orderNo: orderNo, total: total, discount: discount });
+    return json({
+      ok: true, orderNo: orderNo, total: total, discount: discount,
+      payment: payment, payDeadline: payDeadline, bank: bank,
+    });
   } catch (err) {
     console.error(err);
     // 帶出錯誤內容，設定階段比較好判斷問題出在哪
@@ -314,11 +360,13 @@ function getSheet_() {
     sheet.setColumnWidth(2, 150); // 訂單時間
     sheet.setColumnWidth(5, 280); // 地址
     sheet.setColumnWidth(HEADERS.indexOf('備註') + 1, 220);
+    applyStatusValidation_(sheet);
     return sheet;
   }
 
   migratePromoColumns_(sheet);
   migratePackagingColumn_(sheet);
+  migratePaymentColumns_(sheet);
   return sheet;
 }
 
@@ -386,6 +434,57 @@ function migratePackagingColumn_(sheet) {
   }
 }
 
+/**
+ * 舊版試算表沒有「取貨方式」「付款方式」「匯款後五碼」三欄。
+ * 在「備註」左邊插入三欄，既有資料由 Sheets 自動右移，不會錯位。
+ * 既有訂單依地址是否含「自取／面交」推回取貨方式；付款方式留白（當時尚未提供選項）。
+ * 同時為「處理狀態」欄加上下拉選單。只會執行一次。
+ */
+function migratePaymentColumns_(sheet) {
+  const width = sheet.getLastColumn();
+  if (width < 1) return;
+
+  const header = sheet.getRange(1, 1, 1, width).getValues()[0];
+  if (header.indexOf('付款方式') !== -1) return;
+
+  const noteCol = header.indexOf('備註') + 1;
+  const addrCol = header.indexOf('地址') + 1; // 地址在備註左邊，插入後欄號不變
+  if (noteCol <= 0) return;
+
+  sheet.insertColumnsBefore(noteCol, 3);
+  sheet.getRange(1, noteCol, 1, 3)
+    .setValues([['取貨方式', '付款方式', '匯款後五碼']])
+    .setFontWeight('bold')
+    .setBackground('#1c1917')
+    .setFontColor('#fbbf24');
+
+  const rows = sheet.getLastRow() - 1;
+  if (rows > 0 && addrCol > 0) {
+    const addrs = sheet.getRange(2, addrCol, rows, 1).getValues();
+    const values = [];
+    for (let i = 0; i < rows; i++) {
+      values.push([/自取|面交/.test(String(addrs[i][0])) ? '自取／面交' : '宅配', '', '']);
+    }
+    sheet.getRange(2, noteCol, rows, 3).setValues(values);
+  }
+
+  applyStatusValidation_(sheet);
+}
+
+/** 「處理狀態」欄改成下拉選單，賣家點選即可更新，不必打字 */
+function applyStatusValidation_(sheet) {
+  const header = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const col = header.indexOf('處理狀態') + 1;
+  if (col <= 0) return;
+  const rows = sheet.getMaxRows() - 1;
+  if (rows <= 0) return;
+  const rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(STATUS_OPTIONS, true)
+    .setAllowInvalid(true)
+    .build();
+  sheet.getRange(2, col, rows, 1).setDataValidation(rule);
+}
+
 /** 產生 XW20260906-001 形式的訂單編號 */
 function nextOrderNo_(sheet, now) {
   const prefix = 'XW' + Utilities.formatDate(now, 'Asia/Taipei', 'yyyyMMdd');
@@ -432,17 +531,48 @@ function orderBody_(o) {
       ? '送禮（禮盒 ' + o.boxes + ' 個，其中免費 ' + o.freeBoxes +
         (o.extraBoxes ? '、加購 ' + o.extraBoxes + ' 個 ' + money_(o.giftTotal) : '') + '）'
       : '自用（不附禮盒）'),
-    '運費（共 ' + o.packs + ' 公斤）：' + (o.shipping === 0 ? '免運費' : money_(o.shipping)),
+    o.delivery === 'pickup'
+      ? '運費：自取／面交，免運費'
+      : '運費（共 ' + o.packs + ' 公斤）：' + (o.shipping === 0 ? '免運費' : money_(o.shipping)),
     o.discount > 0 ? '優惠碼折抵（' + o.promoCode + '）：-' + money_(o.discount) : '',
     '應付總金額：' + money_(o.total),
+    '付款方式：' + (o.payment === 'cash'
+      ? '取貨時付現'
+      : '銀行轉帳' + (o.last5 ? '（匯款後五碼 ' + o.last5 + '）' : '')),
     '',
     '【收件資料】',
     '姓名：' + o.name,
     '電話：' + o.phone,
-    '地址：' + o.address,
+    '取貨方式：' + (o.delivery === 'pickup' ? '自取／面交' : '黑貓冷凍宅配'),
+    o.delivery === 'pickup'
+      ? (o.address ? '自取／面交說明：' + o.address : '')
+      : '地址：' + o.address,
     o.email ? 'Email：' + o.email : '',
     o.note ? '備註：' + o.note : '',
   ].filter(function (line) { return line !== ''; }).join('\n');
+}
+
+/** 顧客確認信裡的付款說明 */
+function paymentInstructions_(o) {
+  if (o.payment === 'cash') {
+    return ['【付款資訊】',
+      '請於自取／面交時付現 ' + money_(o.total) + '，我們會盡快與您聯繫，約定時間與地點。',
+    ].join('\n');
+  }
+  const lines = ['【付款資訊】'];
+  if (o.bank) {
+    lines.push('請於 ' + o.payDeadline + ' 前匯款 ' + money_(o.total) + '：');
+    lines.push('銀行：' + (o.bank.bankCode ? '（' + o.bank.bankCode + '）' : '') + o.bank.bankName);
+    lines.push('帳號：' + o.bank.account);
+    lines.push('戶名：' + o.bank.holder);
+  } else {
+    lines.push('我們會盡快與您聯繫，提供匯款帳號。請於 ' + o.payDeadline + ' 前匯款 ' + money_(o.total) + '。');
+  }
+  lines.push(o.last5
+    ? '已記錄您的匯款帳號後五碼 ' + o.last5 + '，入帳後我們會依此核對。'
+    : '下單時未填匯款帳號後五碼的話，轉帳後請直接回覆本信告知，方便我們核對。');
+  lines.push('確認入帳後即安排出貨。');
+  return lines.join('\n');
 }
 
 function notifyShop_(o) {
@@ -451,6 +581,7 @@ function notifyShop_(o) {
   MailApp.sendEmail({
     to: to,
     subject: '【' + SHOP_NAME + '】新訂單 ' + o.orderNo + '　' + o.name + '　' + money_(o.total)
+      + (o.payment === 'cash' ? '（取貨付現）' : '（轉帳）')
       + (o.discount > 0 ? '（已用優惠碼）' : ''),
     body: orderBody_(o) + '\n\n—\n本信由訂單系統自動發送。',
   });
@@ -467,11 +598,14 @@ function notifyCustomer_(o) {
       '',
       orderBody_(o),
       '',
+      paymentInstructions_(o),
+      '',
       o.boxes > 0
-        ? '※ 禮盒會分開包裝、隨同一箱寄出，不會預先把鰻魚裝進去（紙盒與冷凍品放在一起容易受潮）。' +
+        ? '※ 禮盒會分開包裝、' + (o.delivery === 'pickup' ? '取貨時一併交給您' : '隨同一箱寄出') +
+          '，不會預先把鰻魚裝進去（紙盒與冷凍品放在一起容易受潮）。' +
           '\n　 請收到後先將鰻魚冷凍保存，要送禮前再自行裝盒。\n'
         : '',
-      '我們將盡快由專人與您聯繫確認付款方式與出貨時間。',
+      '如有任何問題，我們會盡快與您聯繫。',
       '如訂單內容有誤，請直接回覆本信件告知。',
       '',
       SHOP_NAME + '　彰化福興 吳奇清養鰻場',
@@ -500,6 +634,9 @@ function testWrite() {
         note: '這是一筆測試訂單，確認後請刪除',
         quantities: { A: 1, B: 2, C: 0 },
         packaging: 'gift',
+        delivery: 'ship',
+        payment: 'transfer',
+        last5: '01234',
         giftBoxes: 2,
         promoCode: PROMO_CODES.length ? PROMO_CODES[0].codes[0] : '',
       }),
