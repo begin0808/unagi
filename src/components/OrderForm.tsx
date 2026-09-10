@@ -120,6 +120,7 @@ const FIELD_ORDER: [string, string][] = [
   ['address', 'of-address'],
   ['email', 'of-email'],
   ['last5', 'of-last5'],
+  ['lineId', 'of-line'],
 ];
 
 const OrderForm = ({ quantities, setQuantities }: Props) => {
@@ -142,6 +143,8 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   const [delivery, setDelivery] = useState<Delivery>('ship');
   const [pickupNote, setPickupNote] = useState('');
   const [payment, setPayment] = useState<Payment>('transfer');
+  // 選 LINE Pay 時必填：由賣家加顧客好友傳送付款方式（賣家不公開自己的 LINE ID）
+  const [lineId, setLineId] = useState('');
   const [payerName, setPayerName] = useState('');
   const [last5, setLast5] = useState('');
   // 訂單成立後由後端回傳，顯示在完成畫面。
@@ -299,6 +302,12 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
       next.email = 'Email 格式看起來不正確';
     if (payment === 'transfer' && last5.trim() && !/^[0-9]{5}$/.test(last5.trim()))
       next.last5 = '請填寫 5 位數字；不確定的話可以先留空，轉帳後再回覆確認信告知';
+    // LINE ID 規則：4~20 個英文、數字或 . _ -
+    if (payment === 'linepay') {
+      if (!lineId.trim()) next.lineId = '請填寫您的 LINE ID';
+      else if (!/^[A-Za-z0-9._-]{4,20}$/.test(lineId.trim()))
+        next.lineId = 'LINE ID 為 4~20 個英文、數字或 . _ -，請確認是否填寫正確';
+    }
     setErrors(next);
     return next;
   };
@@ -323,7 +332,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   const [triedReview, setTriedReview] = useState(false);
   useEffect(() => {
     if (triedReview) validate();
-  }, [triedReview, name, phone, address, email, last5, delivery, payment, totals.packs]);
+  }, [triedReview, name, phone, address, email, last5, lineId, delivery, payment, totals.packs]);
 
   const handleSubmit = async () => {
     setStep('sending');
@@ -347,6 +356,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           promoCode: appliedCode,
           delivery,
           payment,
+          lineId: payment === 'linepay' ? lineId.trim() : '',
           payerName: payment === 'transfer' ? payerName.trim() : '',
           last5: payment === 'transfer' ? last5.trim() : '',
           company, // honeypot
@@ -384,6 +394,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setDelivery('ship');
     setPickupNote('');
     setPayment('transfer');
+    setLineId('');
     setPayerName('');
     setLast5('');
     setPayInfoInEmail(true);
@@ -413,11 +424,22 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 : <><Landmark size={18} /> 請匯款 {currency(finalTotal)}</>}
             </div>
             {/* 每個子句各自 inline-block，窄螢幕只在子句之間換行 */}
-            {payInfoInEmail ? (
+            {payment === 'linepay' ? (
+              <p className="text-stone-200 text-sm leading-relaxed">
+                <span className="inline-block">賣家會加您的 LINE 好友</span>
+                <span className="inline-block">（LINE ID：<span className="text-white font-bold break-all">{lineId.trim()}</span>），</span>
+                <span className="inline-block">傳送 LINE Pay 付款方式。</span>
+                <span className="inline-block">
+                  {payDeadline
+                    ? <>請於 <strong className="text-amber-200 whitespace-nowrap">{payDeadline}</strong> 前完成付款。</>
+                    : <>請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成付款。</>}
+                </span>
+              </p>
+            ) : payInfoInEmail ? (
               <p className="text-stone-200 text-sm leading-relaxed">
                 <span className="inline-block">
                   <Mail size={14} className="inline -mt-0.5 mr-1 text-amber-300" />
-                  {payment === 'linepay' ? '賣家的 LINE ID 已寄到' : '匯款帳號已寄到'}
+                  匯款帳號已寄到
                 </span>{' '}
                 {/* Email 自成一塊：放不下時整串換到下一行，不從中間斷開 */}
                 <span className="inline-block">
@@ -425,28 +447,35 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 </span>
                 <span className="inline-block">
                   {payDeadline
-                    ? <>請於 <strong className="text-amber-200 whitespace-nowrap">{payDeadline}</strong> 前完成{payment === 'linepay' ? '付款' : '匯款'}。</>
-                    : <>請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成{payment === 'linepay' ? '付款' : '匯款'}。</>}
+                    ? <>請於 <strong className="text-amber-200 whitespace-nowrap">{payDeadline}</strong> 前完成匯款。</>
+                    : <>請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成匯款。</>}
                 </span>
               </p>
             ) : (
               <p className="text-stone-300 text-sm leading-relaxed">
-                <span className="inline-block">我們會盡快與您聯繫，提供{payment === 'linepay' ? ' LINE Pay 付款方式' : '匯款帳號'}。</span>
+                <span className="inline-block">我們會盡快與您聯繫，提供匯款帳號。</span>
                 <span className="inline-block">
                   {payDeadline
-                    ? <>請於 <strong className="text-amber-200 whitespace-nowrap">{payDeadline}</strong> 前完成{payment === 'linepay' ? '付款' : '匯款'}。</>
-                    : <>請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成{payment === 'linepay' ? '付款' : '匯款'}。</>}
+                    ? <>請於 <strong className="text-amber-200 whitespace-nowrap">{payDeadline}</strong> 前完成匯款。</>
+                    : <>請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成匯款。</>}
                 </span>
               </p>
             )}
             <div className="text-stone-400 text-xs leading-relaxed mt-3 space-y-1">
-              {payInfoInEmail && <p>沒看到信的話，請先查看垃圾郵件匣。</p>}
+              {payment !== 'linepay' && payInfoInEmail && <p>沒看到信的話，請先查看垃圾郵件匣。</p>}
               {payment === 'linepay' ? (
-                <p>
-                  <span className="inline-block">加好友後以 LINE Pay 轉帳，</span>
-                  <span className="inline-block">轉帳留言請填訂單編號 <span className="text-stone-200 whitespace-nowrap">{orderNo}</span>，</span>
-                  <span className="inline-block">方便我們核對。</span>
-                </p>
+                <>
+                  <p>
+                    <span className="inline-block">請確認 LINE 已開啟</span>
+                    <span className="inline-block">「允許利用 ID 加入好友」，</span>
+                    <span className="inline-block">以免賣家搜尋不到您。</span>
+                  </p>
+                  <p>
+                    <span className="inline-block">LINE Pay 轉帳時，</span>
+                    <span className="inline-block">轉帳留言請填訂單編號 <span className="text-stone-200 whitespace-nowrap">{orderNo}</span>，</span>
+                    <span className="inline-block">方便我們核對。</span>
+                  </p>
+                </>
               ) : payerName.trim() || last5.trim() ? (
                 <p>入帳後我們會依您填寫的匯款資料核對。</p>
               ) : (
@@ -806,7 +835,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 <Smartphone size={15} className="text-green-400" /> LINE Pay
               </div>
               <p className="text-stone-400 text-xs mt-1 leading-relaxed">
-                賣家的 LINE ID 會寄到您的 Email，加好友後以 LINE Pay 轉帳，請於 {PAYMENT_DEADLINE_HOURS} 小時內完成。
+                填寫您的 LINE ID，賣家會加您好友並傳送付款方式，請於 {PAYMENT_DEADLINE_HOURS} 小時內完成。
               </p>
             </button>
 
@@ -847,6 +876,19 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               </div>
               <p className="text-stone-400 text-xs mt-2 leading-relaxed">
                 用來核對入帳。還不確定用哪個帳戶轉帳的話，可以先留空，轉帳後回覆確認信告知即可。
+              </p>
+            </div>
+          )}
+
+          {payment === 'linepay' && (
+            <div className="mt-4">
+              <Field id="of-line" label="您的 LINE ID" required error={errors.lineId}>
+                <input id="of-line" aria-invalid={!!errors.lineId} className={inputClass} value={lineId} maxLength={20}
+                  onChange={(e) => setLineId(e.target.value.trim())} placeholder="例如 wang0912"
+                  autoComplete="off" autoCapitalize="none" spellCheck={false} />
+              </Field>
+              <p className="text-stone-400 text-xs mt-2 leading-relaxed">
+                賣家會用這個 ID 加您好友，傳送 LINE Pay 付款方式。請到 LINE「設定 → 個人檔案」確認已開啟「允許利用 ID 加入好友」，賣家才搜尋得到您。
               </p>
             </div>
           )}
@@ -950,7 +992,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                   {payment === 'transfer'
                     ? `匯款帳號會寄到您的 Email，請於 ${PAYMENT_DEADLINE_HOURS} 小時內完成匯款，確認入帳後安排出貨。`
                     : payment === 'linepay'
-                      ? `賣家的 LINE ID 會寄到您的 Email，請於 ${PAYMENT_DEADLINE_HOURS} 小時內以 LINE Pay 完成付款，確認收款後安排出貨。`
+                      ? `賣家會加您的 LINE 好友並傳送付款方式，請於 ${PAYMENT_DEADLINE_HOURS} 小時內以 LINE Pay 完成付款，確認收款後安排出貨。`
                       : '請於自取或面交時付現，我們會與您聯繫約定時間地點。'}
                 </p>
               </>
@@ -1121,6 +1163,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                       ? <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">地址</dt><dd className="break-words">{address}</dd></div>
                       : pickupNote.trim() && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">說明</dt><dd className="break-words">{pickupNote}</dd></div>}
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">付款</dt><dd>{payment === 'cash' ? '取貨時付現' : payment === 'linepay' ? 'LINE Pay' : '銀行轉帳'}{payment === 'transfer' && payerLabel && `（${payerLabel}）`}</dd></div>
+                    {payment === 'linepay' && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">LINE ID</dt><dd className="break-all">{lineId}</dd></div>}
                     {email && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">Email</dt><dd className="break-all">{email}</dd></div>}
                     {note && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">備註</dt><dd className="whitespace-pre-line break-words">{note}</dd></div>}
                   </dl>

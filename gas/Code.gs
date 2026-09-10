@@ -57,16 +57,10 @@ const BANK_INFO = {
 };
 
 /**
- * LINE Pay 收款 —— 顧客選「LINE Pay」時，只把賣家的 LINE ID 寫在確認信裡，網頁畫面不顯示。
- * 顧客加好友後以 LINE Pay 轉帳，並在轉帳留言填寫訂單編號，方便對帳。
- *
- * LINE ID 建議只在 Apps Script 編輯器裡填，不要寫進 GitHub 上的 gas/Code.gs；
- * 每次貼上新版程式碼後，記得跟帳號一起重新填回去。
- * 留空時，確認信會改為「將由專人提供 LINE Pay 付款方式」。
+ * LINE Pay：由「賣家」加顧客的 LINE 好友並傳送付款方式（賣家不公開自己的 LINE ID）。
+ * 顧客選 LINE Pay 時必須填寫自己的 LINE ID，記在試算表「LINE ID」欄，
+ * 新訂單通知信也會提醒賣家去加好友。這部分不需要任何設定。
  */
-const LINE_PAY_INFO = {
-  lineId: '',   // 賣家的 LINE ID
-};
 
 /** 轉帳與 LINE Pay 訂單的付款期限（小時），需與網站 src/lib/pricing.ts 的 PAYMENT_DEADLINE_HOURS 一致 */
 const PAYMENT_DEADLINE_HOURS = 48;
@@ -212,6 +206,7 @@ function doPost(e) {
     if (!name) return json({ ok: false, message: '缺少收件人姓名' });
     if (!phone) return json({ ok: false, message: '缺少聯絡電話' });
     if (delivery === 'ship' && !address) return json({ ok: false, message: '缺少收件地址' });
+    if (payment === 'linepay' && !lineId) return json({ ok: false, message: '選擇 LINE Pay 請填寫 LINE ID' });
     // Email 為必填：顧客要靠確認信核對訂單內容，避免到貨後爭議
     if (!email) return json({ ok: false, message: '缺少 Email' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ ok: false, message: 'Email 格式不正確' });
@@ -269,9 +264,8 @@ function doPost(e) {
           new Date(now.getTime() + PAYMENT_DEADLINE_HOURS * 60 * 60 * 1000),
           'Asia/Taipei', 'yyyy/MM/dd HH:mm')
       : '';
-    // 帳號與 LINE ID 只寫在顧客確認信裡，不回傳給網頁；沒設定時信件改為「由專人提供」
+    // 帳號只寫在顧客確認信裡，不回傳給網頁；沒設定時信件改為「由專人提供匯款帳號」
     const bank = payment === 'transfer' && BANK_INFO.account ? BANK_INFO : null;
-    const linePay = payment === 'linepay' && LINE_PAY_INFO.lineId ? LINE_PAY_INFO : null;
 
     const order = {
       orderNo: orderNo, time: now, name: name, phone: phone, address: address,
@@ -280,7 +274,7 @@ function doPost(e) {
       freeBoxes: freeBoxes, extraBoxes: extraBoxes, giftTotal: giftTotal,
       promoCode: promoCode, discount: discount, total: total,
       delivery: delivery, payment: payment, payerName: payerName, last5: last5,
-      payDeadline: payDeadline, bank: bank, linePay: linePay,
+      payDeadline: payDeadline, bank: bank,
     };
 
     // 寄信失敗不影響訂單成立
@@ -292,8 +286,8 @@ function doPost(e) {
     return json({
       ok: true, orderNo: orderNo, total: total, discount: discount,
       payment: payment, payDeadline: payDeadline,
-      // 只告訴網頁「收款資料有沒有寫進確認信」，帳號與 LINE ID 本身不回傳
-      payInfoInEmail: Boolean(bank || linePay),
+      // 只告訴網頁「匯款帳號有沒有寫進確認信」，帳號本身不回傳
+      payInfoInEmail: Boolean(bank),
     });
   } catch (err) {
     console.error(err);
@@ -598,7 +592,8 @@ function orderBody_(o) {
       : '運費（共 ' + o.packs + ' 公斤）：' + (o.shipping === 0 ? '免運費' : money_(o.shipping)),
     o.discount > 0 ? '優惠碼折抵（' + o.promoCode + '）：-' + money_(o.discount) : '',
     '應付總金額：' + money_(o.total),
-    '付款方式：' + paymentLabel_(o.payment) + (o.payment === 'transfer' ? payerLabel_(o) : ''),
+    '付款方式：' + paymentLabel_(o.payment) + (o.payment === 'transfer' ? payerLabel_(o)
+      : o.payment === 'linepay' ? '（顧客 LINE ID：' + o.lineId + '）' : ''),
     '',
     '【收件資料】',
     '姓名：' + o.name,
@@ -608,7 +603,6 @@ function orderBody_(o) {
       ? (o.address ? '自取／面交說明：' + o.address : '')
       : '地址：' + o.address,
     o.email ? 'Email：' + o.email : '',
-    o.lineId ? 'LINE ID：' + o.lineId : '',
     o.note ? '備註：' + o.note : '',
   ].filter(function (line) { return line !== ''; }).join('\n');
 }
@@ -636,18 +630,16 @@ function paymentInstructions_(o) {
     ].join('\n');
   }
   if (o.payment === 'linepay') {
-    const lp = ['【付款資訊】'];
-    if (o.linePay) {
-      lp.push('請於 ' + o.payDeadline + ' 前以 LINE Pay 付款 ' + money_(o.total) + '：');
-      lp.push('1. 在 LINE 搜尋 ID「' + o.linePay.lineId + '」，加入好友');
-      lp.push('2. 以 LINE Pay 轉帳 ' + money_(o.total) + '，轉帳留言請填訂單編號 ' + o.orderNo);
-    } else {
-      lp.push('我們會盡快與您聯繫，提供 LINE Pay 付款方式。請於 ' + o.payDeadline + ' 前付款 ' + money_(o.total) + '。');
-    }
-    lp.push('確認收款後即安排出貨。');
-    lp.push('');
-    lp.push('※ 本店收款的 LINE ID 只會透過這封確認信提供，不會另外以電話或 LINE 通知更改。如收到類似通知，請勿付款，並直接回覆本信或來電確認。');
-    return lp.join('\n');
+    return [
+      '【付款資訊】',
+      '請於 ' + o.payDeadline + ' 前以 LINE Pay 付款 ' + money_(o.total) + '。',
+      '我們會加您的 LINE 好友（您填寫的 LINE ID：' + o.lineId + '），並傳送付款方式。',
+      '請確認您的 LINE 已開啟「允許利用 ID 加入好友」，以免我們搜尋不到。',
+      'LINE Pay 轉帳時，請在留言填寫訂單編號 ' + o.orderNo + '，方便我們核對。',
+      '確認收款後即安排出貨。',
+      '',
+      '※ 本店只會透過 LINE Pay 收款，不會要求您改匯到其他帳戶。如收到可疑訊息，請勿付款，並先回覆本信或來電確認。',
+    ].join('\n');
   }
   const lines = ['【付款資訊】'];
   if (o.bank) {
@@ -675,7 +667,11 @@ function notifyShop_(o) {
     subject: '【' + SHOP_NAME + '】新訂單 ' + o.orderNo + '　' + o.name + '　' + money_(o.total)
       + (o.payment === 'cash' ? '（取貨付現）' : o.payment === 'linepay' ? '（LINE Pay）' : '（轉帳）')
       + (o.discount > 0 ? '（已用優惠碼）' : ''),
-    body: orderBody_(o) + '\n\n—\n本信由訂單系統自動發送。',
+    body: orderBody_(o)
+      + (o.payment === 'linepay'
+        ? '\n\n➜ 請用 LINE 搜尋 ID「' + o.lineId + '」加顧客好友，傳送 LINE Pay 付款方式。'
+        : '')
+      + '\n\n—\n本信由訂單系統自動發送。',
   });
 }
 
