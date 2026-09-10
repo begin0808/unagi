@@ -35,7 +35,7 @@ const SHEET_NAME = '訂單';
  * 每筆訂單會寄給「顧客 1 位 + 這裡列的每一位」，
  * 例如這裡填 2 個人，一筆訂單就用掉 3 個額度。
  */
-const NOTIFY_EMAIL = '';
+const NOTIFY_EMAIL = 'begin0808@gmail.com, lynnyl168168@gmail.com';
 
 const SHOP_NAME = '興旺蒲燒鰻';
 
@@ -45,7 +45,7 @@ const SHOP_NAME = '興旺蒲燒鰻';
  * 只提供銀行代碼與帳號，不列分行與戶名。
  *
  * 建議直接在 Apps Script 編輯器裡填寫，不要寫進 GitHub 上的 gas/Code.gs。
- * 每次貼上新版程式碼後，記得把這裡重新填回去（跟 SPREADSHEET_ID、NOTIFY_EMAIL 一樣）。
+ * 每次貼上新版程式碼後，記得把這裡重新填回去（跟 SPREADSHEET_ID 一樣）。
  *
  * account 留空時，確認信會改為「將由專人提供匯款帳號」，不會出現空白或錯誤的帳號。
  */
