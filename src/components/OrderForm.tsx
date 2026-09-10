@@ -119,7 +119,6 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   const [address, setAddress] = useState('');
   const [email, setEmail] = useState('');
   const [note, setNote] = useState('');
-  const [lineId, setLineId] = useState('');
   const [company, setCompany] = useState(''); // honeypot：真人不會看到也不會填
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState<Step>('form');
@@ -311,7 +310,6 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           phone: phone.trim(),
           address: (delivery === 'ship' ? address : pickupNote).trim(),
           email: email.trim(),
-          lineId: lineId.trim(),
           note: note.trim(),
           quantities,
           packaging,
@@ -346,7 +344,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setPackaging('self');
     setGiftBoxes(1);
     setBoxAdjusted(false);
-    setName(''); setPhone(''); setAddress(''); setEmail(''); setNote(''); setLineId('');
+    setName(''); setPhone(''); setAddress(''); setEmail(''); setNote('');
     setErrors({});
     setPromoInput('');
     setAppliedCode('');
@@ -703,11 +701,6 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           <Field id="of-phone" label="聯絡電話" required error={errors.phone}>
             <input id="of-phone" className={inputClass} value={phone} type="tel"
               onChange={(e) => setPhone(e.target.value)} placeholder="0912-345-678" autoComplete="tel" />
-          </Field>
-
-          <Field id="of-line" label="LINE ID" hint="選填，可用於後續訂購聯繫事宜">
-            <input id="of-line" className={inputClass} value={lineId} maxLength={50}
-              onChange={(e) => setLineId(e.target.value)} placeholder="您的 LINE ID" autoComplete="off" />
           </Field>
 
           {delivery === 'ship' ? (
@@ -1087,7 +1080,6 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                   <dl className="bg-stone-900 rounded-xl p-4 space-y-2 text-stone-300 border border-white/10">
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">姓名</dt><dd>{name}</dd></div>
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">電話</dt><dd>{phone}</dd></div>
-                    {lineId.trim() && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">LINE ID</dt><dd className="break-all">{lineId}</dd></div>}
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">取貨</dt><dd>{delivery === 'pickup' ? '自取／面交（免運費）' : '黑貓冷凍宅配'}</dd></div>
                     {delivery === 'ship'
                       ? <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">地址</dt><dd className="break-words">{address}</dd></div>
