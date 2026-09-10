@@ -107,7 +107,20 @@ const Field = ({
 );
 
 const inputClass =
-  'w-full bg-stone-900 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-stone-500 outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/40 transition-colors';
+  'w-full bg-stone-900 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-stone-500 outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/40 transition-colors aria-[invalid=true]:border-red-500/70 aria-[invalid=true]:ring-1 aria-[invalid=true]:ring-red-500/30';
+
+/**
+ * 必填欄位由上到下的順序（錯誤代號 → 要跳過去的元素 id）。
+ * 按「確認訂單內容」檢查失敗時，跳到第一個有問題的欄位。
+ */
+const FIELD_ORDER: [string, string][] = [
+  ['packs', 'order-specs'],
+  ['name', 'of-name'],
+  ['phone', 'of-phone'],
+  ['address', 'of-address'],
+  ['email', 'of-email'],
+  ['last5', 'of-last5'],
+];
 
 const OrderForm = ({ quantities, setQuantities }: Props) => {
   const [packaging, setPackaging] = useState<Packaging>('self');
@@ -287,13 +300,30 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     if (payment === 'transfer' && last5.trim() && !/^[0-9]{5}$/.test(last5.trim()))
       next.last5 = '請填寫 5 位數字；不確定的話可以先留空，轉帳後再回覆確認信告知';
     setErrors(next);
-    return Object.keys(next).length === 0;
+    return next;
   };
 
   const handleReview = () => {
-    if (validate()) setStep('confirm');
-    else document.getElementById('order-form-fields')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTriedReview(true);
+    const errs = validate();
+    const first = FIELD_ORDER.find(([key]) => errs[key]);
+    if (!first) {
+      setStep('confirm');
+      return;
+    }
+    // 手機版的收件資料排在很下面，不跳過去的話客人看不到紅字，只會以為按鈕壞了
+    const el = document.getElementById(first[1]);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // 直接把游標放進欄位；preventScroll 讓上面的平滑捲動不被打斷
+    if (el instanceof HTMLInputElement) el.focus({ preventScroll: true });
   };
+
+  // 按過一次「確認訂單內容」之後，邊填邊重新檢查：改好的欄位紅字立刻消失
+  const [triedReview, setTriedReview] = useState(false);
+  useEffect(() => {
+    if (triedReview) validate();
+  }, [triedReview, name, phone, address, email, last5, delivery, payment, totals.packs]);
 
   const handleSubmit = async () => {
     setStep('sending');
@@ -346,6 +376,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setBoxAdjusted(false);
     setName(''); setPhone(''); setAddress(''); setEmail(''); setNote('');
     setErrors({});
+    setTriedReview(false);
     setPromoInput('');
     setAppliedCode('');
     setAppliedStep(0);
@@ -461,7 +492,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
       {/* ---------- 左：填寫區 ---------- */}
       <div id="order-form-fields" className="lg:col-span-7 space-y-6">
         {/* 規格數量 */}
-        <div className="bg-stone-800 rounded-2xl border border-white/10 p-5 sm:p-6 shadow-lg">
+        <div id="order-specs" className="bg-stone-800 rounded-2xl border border-white/10 p-5 sm:p-6 shadow-lg">
           <h3 className="text-white font-bold text-lg mb-1 flex items-center gap-2">
             <ClipboardList size={20} className="text-amber-400" /> 選擇規格與數量
           </h3>
@@ -694,19 +725,19 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           </div>
 
           <Field id="of-name" label="收件人姓名" required error={errors.name}>
-            <input id="of-name" className={inputClass} value={name}
+            <input id="of-name" aria-invalid={!!errors.name} className={inputClass} value={name}
               onChange={(e) => setName(e.target.value)} placeholder="王小明" autoComplete="name" />
           </Field>
 
           <Field id="of-phone" label="聯絡電話" required error={errors.phone}>
-            <input id="of-phone" className={inputClass} value={phone} type="tel"
+            <input id="of-phone" aria-invalid={!!errors.phone} className={inputClass} value={phone} type="tel"
               onChange={(e) => setPhone(e.target.value)} placeholder="0912-345-678" autoComplete="tel" />
           </Field>
 
           {delivery === 'ship' ? (
             <Field id="of-address" label="收件地址" required error={errors.address}
               hint="黑貓冷凍宅配，請填寫完整地址">
-              <input id="of-address" className={inputClass} value={address}
+              <input id="of-address" aria-invalid={!!errors.address} className={inputClass} value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="臺南市 710 永康區○○路○○巷 100 號" autoComplete="street-address" />
             </Field>
@@ -719,7 +750,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           )}
 
           <Field id="of-email" label="Email" required hint="確認信與匯款帳號會寄到這裡，請確認填寫正確" error={errors.email}>
-            <input id="of-email" className={inputClass} value={email} type="email"
+            <input id="of-email" aria-invalid={!!errors.email} className={inputClass} value={email} type="email"
               onChange={(e) => setEmail(e.target.value)} placeholder="you@gmail.com" autoComplete="email" />
           </Field>
 
@@ -809,7 +840,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                   onChange={(e) => setPayerName(e.target.value)} placeholder="王小明" autoComplete="off" />
               </Field>
               <Field id="of-last5" label="匯款帳號後五碼" hint="選填" error={errors.last5}>
-                <input id="of-last5" className={`${inputClass} tracking-[0.3em]`} value={last5}
+                <input id="of-last5" aria-invalid={!!errors.last5} className={`${inputClass} tracking-[0.3em]`} value={last5}
                   onChange={(e) => setLast5(e.target.value.replace(/[^0-9]/g, '').slice(0, 5))}
                   inputMode="numeric" maxLength={5} placeholder="12345" autoComplete="off" />
               </Field>
@@ -910,6 +941,11 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 >
                   確認訂單內容 <ShoppingBag size={20} />
                 </button>
+                {Object.keys(errors).length > 0 && (
+                  <p role="alert" className="text-red-400 text-xs mt-2.5 flex items-center justify-center gap-1">
+                    <AlertTriangle size={12} /> 還有欄位需要填寫或修正，請看標示紅字的地方
+                  </p>
+                )}
                 <p className="text-stone-400 text-[11px] leading-relaxed mt-3 text-center">
                   {payment === 'transfer'
                     ? `匯款帳號會寄到您的 Email，請於 ${PAYMENT_DEADLINE_HOURS} 小時內完成匯款，確認入帳後安排出貨。`
