@@ -42,16 +42,18 @@ const SHOP_NAME = '興旺蒲燒鰻';
 /**
  * 收款帳戶 —— 顧客選「銀行轉帳」時，只寫在寄給顧客的訂單確認信裡，網頁畫面不顯示。
  * 這樣一定要填寫真實的 Email 才拿得到帳號，亂填或機器人下的單看不到。
- * 只提供銀行代碼與帳號，不列分行與戶名。
+ * 只提供銀行名稱、銀行代碼與帳號，不列分行與戶名。
  *
- * 建議直接在 Apps Script 編輯器裡填寫，不要寫進 GitHub 上的 gas/Code.gs。
- * 每次貼上新版程式碼後，記得把這裡重新填回去（跟 SPREADSHEET_ID 一樣）。
+ * 銀行名稱與代碼不是機密，已直接寫在程式裡；
+ * 帳號（account）建議只在 Apps Script 編輯器裡填，不要寫進 GitHub 上的 gas/Code.gs。
+ * 每次貼上新版程式碼後，記得把帳號重新填回去（跟 SPREADSHEET_ID 一樣）。
  *
  * account 留空時，確認信會改為「將由專人提供匯款帳號」，不會出現空白或錯誤的帳號。
  */
 const BANK_INFO = {
-  bankCode: '',   // 銀行代碼（3 碼），例如 '000'
-  account: '',    // 帳號（只填數字）
+  bankName: '中國信託商業銀行',  // 銀行名稱（不列分行）
+  bankCode: '822',              // 銀行代碼（3 碼）
+  account: '',                  // 帳號（只填數字）
 };
 
 /** 轉帳訂單的付款期限（小時），需與網站 src/lib/pricing.ts 的 PAYMENT_DEADLINE_HOURS 一致 */
@@ -616,6 +618,7 @@ function paymentInstructions_(o) {
   const lines = ['【付款資訊】'];
   if (o.bank) {
     lines.push('請於 ' + o.payDeadline + ' 前匯款 ' + money_(o.total) + '：');
+    if (o.bank.bankName) lines.push('銀行：' + o.bank.bankName);
     if (o.bank.bankCode) lines.push('銀行代碼：' + o.bank.bankCode);
     lines.push('帳號：' + o.bank.account);
   } else {
