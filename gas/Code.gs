@@ -40,19 +40,18 @@ const NOTIFY_EMAIL = '';
 const SHOP_NAME = '興旺蒲燒鰻';
 
 /**
- * 收款帳戶 —— 顧客選「銀行轉帳」時，送出訂單後的畫面與確認信會顯示這組帳號。
+ * 收款帳戶 —— 顧客選「銀行轉帳」時，只寫在寄給顧客的訂單確認信裡，網頁畫面不顯示。
+ * 這樣一定要填寫真實的 Email 才拿得到帳號，亂填或機器人下的單看不到。
+ * 只提供銀行代碼與帳號，不列分行與戶名。
  *
  * 建議直接在 Apps Script 編輯器裡填寫，不要寫進 GitHub 上的 gas/Code.gs。
  * 每次貼上新版程式碼後，記得把這裡重新填回去（跟 SPREADSHEET_ID、NOTIFY_EMAIL 一樣）。
  *
- * account 留空時不會顯示任何帳號，畫面與信件會改為「將由專人提供匯款帳號」，
- * 不會出現空白或錯誤的帳號。
+ * account 留空時，確認信會改為「將由專人提供匯款帳號」，不會出現空白或錯誤的帳號。
  */
 const BANK_INFO = {
-  bankCode: '',   // 銀行代碼，例如 '000'
-  bankName: '',   // 銀行與分行，例如 '○○銀行 ○○分行'
+  bankCode: '',   // 銀行代碼（3 碼），例如 '000'
   account: '',    // 帳號（只填數字）
-  holder: '',     // 戶名
 };
 
 /** 轉帳訂單的付款期限（小時），需與網站 src/lib/pricing.ts 的 PAYMENT_DEADLINE_HOURS 一致 */
@@ -133,10 +132,10 @@ function shippingFee(packs) {
 }
 
 const HEADERS = [
-  '訂單編號', '訂單時間', '姓名', '電話', '地址', 'Email',
+  '訂單編號', '訂單時間', '姓名', '電話', '地址', 'Email', 'LINE ID',
   '規格A', '規格B', '規格C', '總公斤', '包裝方式', '禮盒數',
   '商品金額', '禮盒金額', '運費', '優惠碼', '折扣金額',
-  '總金額', '取貨方式', '付款方式', '匯款後五碼', '備註', '處理狀態',
+  '總金額', '取貨方式', '付款方式', '匯款人姓名', '匯款後五碼', '備註', '處理狀態',
 ];
 
 /* ===================== 主要進入點 ===================== */
@@ -169,6 +168,7 @@ function doPost(e) {
     const address = String(data.address || '').trim();
     const email = String(data.email || '').trim();
     const note = String(data.note || '').trim();
+    const lineId = String(data.lineId || '').trim().slice(0, 50);
 
     const q = data.quantities || {};
     const qa = toCount(q.A);
@@ -191,6 +191,7 @@ function doPost(e) {
     const payment = data.payment === 'cash' && delivery === 'pickup' ? 'cash' : 'transfer';
     // 只留數字；若客人填了整串帳號，取最後五碼
     const last5 = payment === 'transfer' ? String(data.last5 || '').replace(/[^0-9]/g, '').slice(-5) : '';
+    const payerName = payment === 'transfer' ? String(data.payerName || '').trim().slice(0, 30) : '';
 
     if (!name) return json({ ok: false, message: '缺少收件人姓名' });
     if (!phone) return json({ ok: false, message: '缺少聯絡電話' });
@@ -230,14 +231,15 @@ function doPost(e) {
       now = new Date();
       orderNo = nextOrderNo_(sheet, now);
 
-      // 電話與後五碼前面加 '，強制以文字存入，避免開頭的 0 被試算表當成數字吃掉
+      // 電話、LINE ID、後五碼前面加 '，強制以文字存入，避免開頭的 0 被試算表當成數字吃掉
       sheet.appendRow([
-        orderNo, now, name, "'" + phone, address, email,
+        orderNo, now, name, "'" + phone, address, email, lineId ? "'" + lineId : '',
         qa, qb, qc, packs, packaging === 'gift' ? '送禮' : '自用', boxes,
         itemsTotal, giftTotal, shipping, promoCode, discount,
         total,
         delivery === 'pickup' ? '自取／面交' : '宅配',
         payment === 'cash' ? '取貨時付現' : '銀行轉帳',
+        payerName,
         last5 ? "'" + last5 : '',
         note,
         payment === 'cash' ? '待取貨' : '待付款',
@@ -251,16 +253,17 @@ function doPost(e) {
           new Date(now.getTime() + PAYMENT_DEADLINE_HOURS * 60 * 60 * 1000),
           'Asia/Taipei', 'yyyy/MM/dd HH:mm')
       : '';
-    // 帳號沒設定時不回傳，前端與信件會改為「由專人提供匯款帳號」
+    // 帳號只寫在顧客確認信裡，不回傳給網頁；沒設定時信件改為「由專人提供匯款帳號」
     const bank = payment === 'transfer' && BANK_INFO.account ? BANK_INFO : null;
 
     const order = {
       orderNo: orderNo, time: now, name: name, phone: phone, address: address,
-      email: email, note: note, qa: qa, qb: qb, qc: qc, packs: packs, boxes: boxes,
+      email: email, lineId: lineId, note: note, qa: qa, qb: qb, qc: qc, packs: packs, boxes: boxes,
       itemsTotal: itemsTotal, packaging: packaging, shipping: shipping,
       freeBoxes: freeBoxes, extraBoxes: extraBoxes, giftTotal: giftTotal,
       promoCode: promoCode, discount: discount, total: total,
-      delivery: delivery, payment: payment, last5: last5, payDeadline: payDeadline, bank: bank,
+      delivery: delivery, payment: payment, payerName: payerName, last5: last5,
+      payDeadline: payDeadline, bank: bank,
     };
 
     // 寄信失敗不影響訂單成立
@@ -271,7 +274,9 @@ function doPost(e) {
 
     return json({
       ok: true, orderNo: orderNo, total: total, discount: discount,
-      payment: payment, payDeadline: payDeadline, bank: bank,
+      payment: payment, payDeadline: payDeadline,
+      // 只告訴網頁「帳號有沒有寫進確認信」，帳號本身不回傳
+      bankInEmail: Boolean(bank),
     });
   } catch (err) {
     console.error(err);
@@ -367,6 +372,7 @@ function getSheet_() {
   migratePromoColumns_(sheet);
   migratePackagingColumn_(sheet);
   migratePaymentColumns_(sheet);
+  migrateContactColumns_(sheet);
   return sheet;
 }
 
@@ -471,6 +477,45 @@ function migratePaymentColumns_(sheet) {
   applyStatusValidation_(sheet);
 }
 
+/**
+ * 舊版試算表沒有「LINE ID」「匯款人姓名」兩欄。
+ * LINE ID 插在「Email」右邊，匯款人姓名插在「匯款後五碼」左邊，既有資料由 Sheets 自動右移。
+ * 必須在 migratePaymentColumns_ 之後執行（要先有「匯款後五碼」欄）。
+ */
+function migrateContactColumns_(sheet) {
+  const a = insertColumnNextTo_(sheet, 'LINE ID', 'Email', 'after');
+  const b = insertColumnNextTo_(sheet, '匯款人姓名', '匯款後五碼', 'before');
+  if (a || b) applyStatusValidation_(sheet);
+}
+
+/**
+ * 表頭沒有 name 這一欄時，在 anchor 欄的左邊（before）或右邊（after）插入一個空白欄。
+ * 已經有這一欄、或找不到 anchor 時什麼都不做。有插入時回傳 true。
+ */
+function insertColumnNextTo_(sheet, name, anchor, side) {
+  const width = sheet.getLastColumn();
+  if (width < 1) return false;
+  const header = sheet.getRange(1, 1, 1, width).getValues()[0];
+  if (header.indexOf(name) !== -1) return false;
+  const anchorCol = header.indexOf(anchor) + 1;
+  if (anchorCol <= 0) return false;
+
+  let col;
+  if (side === 'after') {
+    sheet.insertColumnsAfter(anchorCol, 1);
+    col = anchorCol + 1;
+  } else {
+    sheet.insertColumnsBefore(anchorCol, 1);
+    col = anchorCol;
+  }
+  sheet.getRange(1, col)
+    .setValue(name)
+    .setFontWeight('bold')
+    .setBackground('#1c1917')
+    .setFontColor('#fbbf24');
+  return true;
+}
+
 /** 「處理狀態」欄改成下拉選單，賣家點選即可更新，不必打字 */
 function applyStatusValidation_(sheet) {
   const header = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -538,7 +583,7 @@ function orderBody_(o) {
     '應付總金額：' + money_(o.total),
     '付款方式：' + (o.payment === 'cash'
       ? '取貨時付現'
-      : '銀行轉帳' + (o.last5 ? '（匯款後五碼 ' + o.last5 + '）' : '')),
+      : '銀行轉帳' + payerLabel_(o)),
     '',
     '【收件資料】',
     '姓名：' + o.name,
@@ -548,8 +593,17 @@ function orderBody_(o) {
       ? (o.address ? '自取／面交說明：' + o.address : '')
       : '地址：' + o.address,
     o.email ? 'Email：' + o.email : '',
+    o.lineId ? 'LINE ID：' + o.lineId : '',
     o.note ? '備註：' + o.note : '',
   ].filter(function (line) { return line !== ''; }).join('\n');
+}
+
+/** 「（匯款人 王小明，後五碼 01234）」；兩項都沒填時回傳空字串 */
+function payerLabel_(o) {
+  const parts = [];
+  if (o.payerName) parts.push('匯款人 ' + o.payerName);
+  if (o.last5) parts.push('後五碼 ' + o.last5);
+  return parts.length ? '（' + parts.join('，') + '）' : '';
 }
 
 /** 顧客確認信裡的付款說明 */
@@ -562,15 +616,14 @@ function paymentInstructions_(o) {
   const lines = ['【付款資訊】'];
   if (o.bank) {
     lines.push('請於 ' + o.payDeadline + ' 前匯款 ' + money_(o.total) + '：');
-    lines.push('銀行：' + (o.bank.bankCode ? '（' + o.bank.bankCode + '）' : '') + o.bank.bankName);
+    if (o.bank.bankCode) lines.push('銀行代碼：' + o.bank.bankCode);
     lines.push('帳號：' + o.bank.account);
-    lines.push('戶名：' + o.bank.holder);
   } else {
     lines.push('我們會盡快與您聯繫，提供匯款帳號。請於 ' + o.payDeadline + ' 前匯款 ' + money_(o.total) + '。');
   }
-  lines.push(o.last5
-    ? '已記錄您的匯款帳號後五碼 ' + o.last5 + '，入帳後我們會依此核對。'
-    : '下單時未填匯款帳號後五碼的話，轉帳後請直接回覆本信告知，方便我們核對。');
+  lines.push(o.payerName || o.last5
+    ? '已記錄您的匯款資料' + payerLabel_(o) + '，入帳後我們會依此核對。'
+    : '轉帳後請直接回覆本信，告知匯款人姓名或匯款帳號後五碼，方便我們核對。');
   lines.push('確認入帳後即安排出貨。');
   return lines.join('\n');
 }
@@ -636,6 +689,8 @@ function testWrite() {
         packaging: 'gift',
         delivery: 'ship',
         payment: 'transfer',
+        lineId: 'test_line',
+        payerName: '測試',
         last5: '01234',
         giftBoxes: 2,
         promoCode: PROMO_CODES.length ? PROMO_CODES[0].codes[0] : '',

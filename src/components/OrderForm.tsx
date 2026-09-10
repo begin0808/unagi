@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Minus, Plus, Gift, Truck, ShoppingBag, CheckCircle2, AlertTriangle,
   Loader2, X, ExternalLink, ClipboardList, Ticket, CheckCircle, ChevronRight, Leaf,
-  Wallet, Landmark, Banknote, Copy, Check, MapPin,
+  Wallet, Landmark, Banknote, MapPin, Mail,
 } from 'lucide-react';
 import {
   SPECS, PRICE_PER_KG, SHIPPING_TIERS, FREE_SHIPPING_PACKS, PAYMENT_DEADLINE_HOURS,
@@ -31,14 +31,6 @@ type Step = 'form' | 'confirm' | 'sending' | 'done' | 'error';
 type PromoState = 'idle' | 'checking' | 'ok' | 'bad';
 /** 付款方式：銀行轉帳，或取貨時付現（僅限自取／面交） */
 type Payment = 'transfer' | 'cash';
-
-/** 收款帳戶，由後端在轉帳訂單成立後回傳；帳號本身只存在 gas/Code.gs */
-interface BankInfo {
-  bankCode: string;
-  bankName: string;
-  account: string;
-  holder: string;
-}
 
 interface Props {
   quantities: Quantities;
@@ -127,6 +119,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   const [address, setAddress] = useState('');
   const [email, setEmail] = useState('');
   const [note, setNote] = useState('');
+  const [lineId, setLineId] = useState('');
   const [company, setCompany] = useState(''); // honeypot：真人不會看到也不會填
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState<Step>('form');
@@ -137,12 +130,13 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   const [delivery, setDelivery] = useState<Delivery>('ship');
   const [pickupNote, setPickupNote] = useState('');
   const [payment, setPayment] = useState<Payment>('transfer');
+  const [payerName, setPayerName] = useState('');
   const [last5, setLast5] = useState('');
-  // 訂單成立後由後端回傳，顯示在完成畫面
-  const [bankInfo, setBankInfo] = useState<BankInfo | null>(null);
+  // 訂單成立後由後端回傳，顯示在完成畫面。
+  // 匯款帳號刻意不回傳給網頁、只寫在確認信裡：要填真實的 Email 才拿得到。
+  const [bankInEmail, setBankInEmail] = useState(true);
   const [payDeadline, setPayDeadline] = useState('');
   const [finalTotal, setFinalTotal] = useState(0);
-  const [copied, setCopied] = useState(false);
 
   // 優惠碼：輸入框內容與「已成功套用」的碼分開存，
   // 客人改動輸入框時要立刻取消已套用狀態，避免看到與實際不符的金額。
@@ -221,17 +215,6 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     if (v === 'ship' && payment === 'cash') setPayment('transfer');
   };
 
-  const copyAccount = async () => {
-    if (!bankInfo) return;
-    try {
-      await navigator.clipboard.writeText(bankInfo.account);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // 部分瀏覽器不允許寫入剪貼簿，帳號本身仍可長按選取
-    }
-  };
-
   /**
    * 還沒設定 Apps Script 網址時（例如剛部署、環境變數尚未填），
    * 不讓顧客白填一輪再失敗：改為只保留金額試算，並導向備援訂購單。
@@ -276,6 +259,12 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
       setPromoState('idle');
     }
   };
+
+  /** 確認視窗用：「匯款人 王小明，後五碼 01234」 */
+  const payerLabel = [
+    payerName.trim() && `匯款人 ${payerName.trim()}`,
+    last5.trim() && `後五碼 ${last5.trim()}`,
+  ].filter(Boolean).join('，');
 
   const setQty = (id: SpecId, n: number) =>
     setQuantities((prev) => ({ ...prev, [id]: n }));
@@ -322,6 +311,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           phone: phone.trim(),
           address: (delivery === 'ship' ? address : pickupNote).trim(),
           email: email.trim(),
+          lineId: lineId.trim(),
           note: note.trim(),
           quantities,
           packaging,
@@ -329,6 +319,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           promoCode: appliedCode,
           delivery,
           payment,
+          payerName: payment === 'transfer' ? payerName.trim() : '',
           last5: payment === 'transfer' ? last5.trim() : '',
           company, // honeypot
         }),
@@ -338,7 +329,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
       if (!data || !data.ok) throw new Error(data?.message || '訂單未能成立');
 
       setOrderNo(data.orderNo || '');
-      setBankInfo(data.bank && data.bank.account ? data.bank : null);
+      setBankInEmail(data.bankInEmail !== false);
       setPayDeadline(data.payDeadline || '');
       // 以後端重算的金額為準
       setFinalTotal(Number(data.total) || totals.total);
@@ -354,7 +345,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setPackaging('self');
     setGiftBoxes(1);
     setBoxAdjusted(false);
-    setName(''); setPhone(''); setAddress(''); setEmail(''); setNote('');
+    setName(''); setPhone(''); setAddress(''); setEmail(''); setNote(''); setLineId('');
     setErrors({});
     setPromoInput('');
     setAppliedCode('');
@@ -363,11 +354,11 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setDelivery('ship');
     setPickupNote('');
     setPayment('transfer');
+    setPayerName('');
     setLast5('');
-    setBankInfo(null);
+    setBankInEmail(true);
     setPayDeadline('');
     setFinalTotal(0);
-    setCopied(false);
     setStep('form');
   };
 
@@ -389,50 +380,41 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
             <div className="flex items-center gap-2 text-amber-300 font-bold mb-3">
               <Landmark size={18} /> 請匯款 {currency(finalTotal)}
             </div>
-            {bankInfo ? (
-              <>
-                <dl className="space-y-2 text-sm">
-                  <div className="flex gap-3">
-                    <dt className="text-stone-500 w-12 flex-shrink-0">銀行</dt>
-                    <dd className="text-stone-200">
-                      {bankInfo.bankCode && <span className="text-amber-300 font-bold">（{bankInfo.bankCode}）</span>}
-                      {bankInfo.bankName}
-                    </dd>
-                  </div>
-                  <div className="flex gap-3 items-center">
-                    <dt className="text-stone-500 w-12 flex-shrink-0">帳號</dt>
-                    <dd className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
-                      <span className="text-white font-bold text-base sm:text-lg tracking-wide sm:tracking-wider select-all whitespace-nowrap">{bankInfo.account}</span>
-                      <button
-                        type="button"
-                        onClick={copyAccount}
-                        className="flex-shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-stone-700 hover:bg-stone-600 text-stone-100 transition-colors"
-                      >
-                        {copied ? <><Check size={13} /> 已複製</> : <><Copy size={13} /> 複製</>}
-                      </button>
-                    </dd>
-                  </div>
-                  <div className="flex gap-3">
-                    <dt className="text-stone-500 w-12 flex-shrink-0">戶名</dt>
-                    <dd className="text-stone-200">{bankInfo.holder}</dd>
-                  </div>
-                </dl>
-                {payDeadline && (
-                  <p className="text-amber-300 text-sm mt-3 pt-3 border-t border-white/10">
-                    請於 <strong className="text-amber-200">{payDeadline}</strong> 前完成匯款
-                  </p>
-                )}
-              </>
+            {/* 每個子句各自 inline-block，窄螢幕只在子句之間換行 */}
+            {bankInEmail ? (
+              <p className="text-stone-200 text-sm leading-relaxed">
+                <span className="inline-block">
+                  <Mail size={14} className="inline -mt-0.5 mr-1 text-amber-300" />
+                  匯款帳號已寄到 <span className="text-white font-bold break-all">{email.trim()}</span>，
+                </span>
+                <span className="inline-block">
+                  {payDeadline
+                    ? <>請於 <strong className="text-amber-200 whitespace-nowrap">{payDeadline}</strong> 前完成匯款。</>
+                    : <>請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成匯款。</>}
+                </span>
+              </p>
             ) : (
               <p className="text-stone-300 text-sm leading-relaxed">
-                我們會盡快與您聯繫，提供匯款帳號。請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成匯款。
+                <span className="inline-block">我們會盡快與您聯繫，提供匯款帳號。</span>
+                <span className="inline-block">
+                  {payDeadline
+                    ? <>請於 <strong className="text-amber-200 whitespace-nowrap">{payDeadline}</strong> 前完成匯款。</>
+                    : <>請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成匯款。</>}
+                </span>
               </p>
             )}
-            <p className="text-stone-400 text-xs leading-relaxed mt-3">
-              {last5.trim()
-                ? <>已記錄您的匯款帳號後五碼 <span className="text-stone-200">{last5.trim()}</span>，入帳後我們會依此核對。</>
-                : <>下單時未填匯款帳號後五碼的話，轉帳後請回覆確認信告知，方便我們核對。</>}
-            </p>
+            <div className="text-stone-400 text-xs leading-relaxed mt-3 space-y-1">
+              {bankInEmail && <p>沒看到信的話，請先查看垃圾郵件匣。</p>}
+              {payerName.trim() || last5.trim() ? (
+                <p>入帳後我們會依您填寫的匯款資料核對。</p>
+              ) : (
+                <p>
+                  <span className="inline-block">轉帳後請回覆確認信，</span>
+                  <span className="inline-block">告知匯款人姓名或帳號後五碼，</span>
+                  <span className="inline-block">方便我們核對。</span>
+                </p>
+              )}
+            </div>
           </div>
         ) : (
           <div className="max-w-md mx-auto my-6 text-left bg-stone-900 rounded-2xl border border-green-500/40 p-5">
@@ -710,6 +692,11 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               onChange={(e) => setPhone(e.target.value)} placeholder="0912-345-678" autoComplete="tel" />
           </Field>
 
+          <Field id="of-line" label="LINE ID" hint="選填，方便用 LINE 與您聯繫">
+            <input id="of-line" className={inputClass} value={lineId} maxLength={50}
+              onChange={(e) => setLineId(e.target.value)} placeholder="您的 LINE ID" autoComplete="off" />
+          </Field>
+
           {delivery === 'ship' ? (
             <Field id="of-address" label="收件地址" required error={errors.address}
               hint="黑貓冷凍宅配，請填寫完整地址">
@@ -725,7 +712,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
             </Field>
           )}
 
-          <Field id="of-email" label="Email" required hint="訂單確認信會寄到這裡，請確認填寫正確" error={errors.email}>
+          <Field id="of-email" label="Email" required hint="確認信與匯款帳號會寄到這裡，請確認填寫正確" error={errors.email}>
             <input id="of-email" className={inputClass} value={email} type="email"
               onChange={(e) => setEmail(e.target.value)} placeholder="you@gmail.com" autoComplete="email" />
           </Field>
@@ -764,7 +751,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 <Landmark size={15} className="text-amber-400" /> 銀行轉帳
               </div>
               <p className="text-stone-400 text-xs mt-1 leading-relaxed">
-                ATM 或網路銀行。送出訂單後會提供匯款帳號，請於 {PAYMENT_DEADLINE_HOURS} 小時內完成匯款。
+                ATM 或網路銀行。匯款帳號會寄到您的 Email，請於 {PAYMENT_DEADLINE_HOURS} 小時內完成匯款。
               </p>
             </button>
 
@@ -792,13 +779,19 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
 
           {payment === 'transfer' && (
             <div className="mt-4">
-              <Field id="of-last5" label="匯款帳號後五碼" hint="選填，方便我們核對入帳" error={errors.last5}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field id="of-payer" label="匯款人姓名" hint="選填">
+                <input id="of-payer" className={inputClass} value={payerName} maxLength={30}
+                  onChange={(e) => setPayerName(e.target.value)} placeholder="王小明" autoComplete="off" />
+              </Field>
+              <Field id="of-last5" label="匯款帳號後五碼" hint="選填" error={errors.last5}>
                 <input id="of-last5" className={`${inputClass} tracking-[0.3em]`} value={last5}
                   onChange={(e) => setLast5(e.target.value.replace(/[^0-9]/g, '').slice(0, 5))}
                   inputMode="numeric" maxLength={5} placeholder="12345" autoComplete="off" />
               </Field>
+              </div>
               <p className="text-stone-400 text-xs mt-2 leading-relaxed">
-                已確定要用哪個帳戶轉帳可以先填；不確定、用家人帳戶或 ATM 無摺存款的話，轉帳後回覆確認信告知即可。
+                用來核對入帳。由家人代為轉帳的話，請填家人的姓名；還不確定用哪個帳戶，可以先留空，轉帳後回覆確認信告知即可。
               </p>
             </div>
           )}
@@ -895,7 +888,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 </button>
                 <p className="text-stone-400 text-[11px] leading-relaxed mt-3 text-center">
                   {payment === 'transfer'
-                    ? `送出後會提供匯款帳號，請於 ${PAYMENT_DEADLINE_HOURS} 小時內完成匯款，確認入帳後安排出貨。`
+                    ? `匯款帳號會寄到您的 Email，請於 ${PAYMENT_DEADLINE_HOURS} 小時內完成匯款，確認入帳後安排出貨。`
                     : '請於自取或面交時付現，我們會與您聯繫約定時間地點。'}
                 </p>
               </>
@@ -1061,11 +1054,12 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                   <dl className="bg-stone-900 rounded-xl p-4 space-y-2 text-stone-300 border border-white/10">
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">姓名</dt><dd>{name}</dd></div>
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">電話</dt><dd>{phone}</dd></div>
+                    {lineId.trim() && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">LINE ID</dt><dd className="break-all">{lineId}</dd></div>}
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">取貨</dt><dd>{delivery === 'pickup' ? '自取／面交（免運費）' : '黑貓冷凍宅配'}</dd></div>
                     {delivery === 'ship'
                       ? <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">地址</dt><dd className="break-words">{address}</dd></div>
                       : pickupNote.trim() && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">說明</dt><dd className="break-words">{pickupNote}</dd></div>}
-                    <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">付款</dt><dd>{payment === 'cash' ? '取貨時付現' : '銀行轉帳'}{payment === 'transfer' && last5.trim() && `（後五碼 ${last5.trim()}）`}</dd></div>
+                    <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">付款</dt><dd>{payment === 'cash' ? '取貨時付現' : '銀行轉帳'}{payment === 'transfer' && payerLabel && `（${payerLabel}）`}</dd></div>
                     {email && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">Email</dt><dd className="break-all">{email}</dd></div>}
                     {note && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">備註</dt><dd className="whitespace-pre-line break-words">{note}</dd></div>}
                   </dl>
