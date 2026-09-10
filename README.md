@@ -51,8 +51,8 @@ npm run preview  # 預覽建置結果
 
 ### 付款方式
 
-宅配訂單一律銀行轉帳；自取／面交的訂單可選轉帳或取貨時付現，且免運費。
-收款帳戶設定在 `gas/Code.gs` 的 `BANK_INFO`（建議只在 Apps Script 裡填），
+宅配訂單可選銀行轉帳或 LINE Pay；自取／面交的訂單另可選取貨時付現，且免運費。
+收款帳戶與 LINE Pay 的 LINE ID 設定在 `gas/Code.gs` 的 `BANK_INFO`、`LINE_PAY_INFO`（帳號與 LINE ID 建議只在 Apps Script 裡填），
 轉帳訂單成立後只寫進顧客確認信，不回傳給網頁（要填真實的 Email 才拿得到帳號）。
 付款期限 `PAYMENT_DEADLINE_HOURS` 在 `pricing.ts` 與 `Code.gs` 各有一份，改動時兩邊都要改。
 

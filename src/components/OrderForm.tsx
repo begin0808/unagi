@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Minus, Plus, Gift, Truck, ShoppingBag, CheckCircle2, AlertTriangle,
   Loader2, X, ExternalLink, ClipboardList, Ticket, CheckCircle, ChevronRight, Leaf,
-  Wallet, Landmark, Banknote, MapPin, Mail,
+  Wallet, Landmark, Banknote, MapPin, Mail, Smartphone,
 } from 'lucide-react';
 import {
   SPECS, PRICE_PER_KG, SHIPPING_TIERS, FREE_SHIPPING_PACKS, PAYMENT_DEADLINE_HOURS,
@@ -29,8 +29,8 @@ const FALLBACK_FORM_URL =
 
 type Step = 'form' | 'confirm' | 'sending' | 'done' | 'error';
 type PromoState = 'idle' | 'checking' | 'ok' | 'bad';
-/** 付款方式：銀行轉帳，或取貨時付現（僅限自取／面交） */
-type Payment = 'transfer' | 'cash';
+/** 付款方式：銀行轉帳、LINE Pay，或取貨時付現（僅限自取／面交） */
+type Payment = 'transfer' | 'linepay' | 'cash';
 
 interface Props {
   quantities: Quantities;
@@ -133,8 +133,8 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   const [payerName, setPayerName] = useState('');
   const [last5, setLast5] = useState('');
   // 訂單成立後由後端回傳，顯示在完成畫面。
-  // 匯款帳號刻意不回傳給網頁、只寫在確認信裡：要填真實的 Email 才拿得到。
-  const [bankInEmail, setBankInEmail] = useState(true);
+  // 匯款帳號與 LINE ID 刻意不回傳給網頁、只寫在確認信裡：要填真實的 Email 才拿得到。
+  const [payInfoInEmail, setPayInfoInEmail] = useState(true);
   const [payDeadline, setPayDeadline] = useState('');
   const [finalTotal, setFinalTotal] = useState(0);
 
@@ -329,7 +329,8 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
       if (!data || !data.ok) throw new Error(data?.message || '訂單未能成立');
 
       setOrderNo(data.orderNo || '');
-      setBankInEmail(data.bankInEmail !== false);
+      // 舊版後端回傳的欄位名稱是 bankInEmail
+      setPayInfoInEmail((data.payInfoInEmail ?? data.bankInEmail) !== false);
       setPayDeadline(data.payDeadline || '');
       // 以後端重算的金額為準
       setFinalTotal(Number(data.total) || totals.total);
@@ -356,7 +357,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setPayment('transfer');
     setPayerName('');
     setLast5('');
-    setBankInEmail(true);
+    setPayInfoInEmail(true);
     setPayDeadline('');
     setFinalTotal(0);
     setStep('form');
@@ -375,37 +376,49 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
             您的訂單編號：<span className="text-amber-400 font-bold tracking-wider">{orderNo}</span>
           </p>
         )}
-        {payment === 'transfer' ? (
+        {payment !== 'cash' ? (
           <div className="max-w-md mx-auto my-6 text-left bg-stone-900 rounded-2xl border border-amber-500/40 p-5">
             <div className="flex items-center gap-2 text-amber-300 font-bold mb-3">
-              <Landmark size={18} /> 請匯款 {currency(finalTotal)}
+              {payment === 'linepay'
+                ? <><Smartphone size={18} /> 請以 LINE Pay 付款 {currency(finalTotal)}</>
+                : <><Landmark size={18} /> 請匯款 {currency(finalTotal)}</>}
             </div>
             {/* 每個子句各自 inline-block，窄螢幕只在子句之間換行 */}
-            {bankInEmail ? (
+            {payInfoInEmail ? (
               <p className="text-stone-200 text-sm leading-relaxed">
                 <span className="inline-block">
                   <Mail size={14} className="inline -mt-0.5 mr-1 text-amber-300" />
-                  匯款帳號已寄到 <span className="text-white font-bold break-all">{email.trim()}</span>，
+                  {payment === 'linepay' ? '賣家的 LINE ID 已寄到' : '匯款帳號已寄到'}
+                </span>{' '}
+                {/* Email 自成一塊：放不下時整串換到下一行，不從中間斷開 */}
+                <span className="inline-block">
+                  <span className="text-white font-bold break-all">{email.trim()}</span>，
                 </span>
                 <span className="inline-block">
                   {payDeadline
-                    ? <>請於 <strong className="text-amber-200 whitespace-nowrap">{payDeadline}</strong> 前完成匯款。</>
-                    : <>請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成匯款。</>}
+                    ? <>請於 <strong className="text-amber-200 whitespace-nowrap">{payDeadline}</strong> 前完成{payment === 'linepay' ? '付款' : '匯款'}。</>
+                    : <>請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成{payment === 'linepay' ? '付款' : '匯款'}。</>}
                 </span>
               </p>
             ) : (
               <p className="text-stone-300 text-sm leading-relaxed">
-                <span className="inline-block">我們會盡快與您聯繫，提供匯款帳號。</span>
+                <span className="inline-block">我們會盡快與您聯繫，提供{payment === 'linepay' ? ' LINE Pay 付款方式' : '匯款帳號'}。</span>
                 <span className="inline-block">
                   {payDeadline
-                    ? <>請於 <strong className="text-amber-200 whitespace-nowrap">{payDeadline}</strong> 前完成匯款。</>
-                    : <>請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成匯款。</>}
+                    ? <>請於 <strong className="text-amber-200 whitespace-nowrap">{payDeadline}</strong> 前完成{payment === 'linepay' ? '付款' : '匯款'}。</>
+                    : <>請於下單後 {PAYMENT_DEADLINE_HOURS} 小時內完成{payment === 'linepay' ? '付款' : '匯款'}。</>}
                 </span>
               </p>
             )}
             <div className="text-stone-400 text-xs leading-relaxed mt-3 space-y-1">
-              {bankInEmail && <p>沒看到信的話，請先查看垃圾郵件匣。</p>}
-              {payerName.trim() || last5.trim() ? (
+              {payInfoInEmail && <p>沒看到信的話，請先查看垃圾郵件匣。</p>}
+              {payment === 'linepay' ? (
+                <p>
+                  <span className="inline-block">加好友後以 LINE Pay 轉帳，</span>
+                  <span className="inline-block">轉帳留言請填訂單編號 <span className="text-stone-200 whitespace-nowrap">{orderNo}</span>，</span>
+                  <span className="inline-block">方便我們核對。</span>
+                </p>
+              ) : payerName.trim() || last5.trim() ? (
                 <p>入帳後我們會依您填寫的匯款資料核對。</p>
               ) : (
                 <p>
@@ -736,7 +749,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
             <Wallet size={20} className="text-amber-400" /> 付款方式
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               type="button"
               onClick={() => setPayment('transfer')}
@@ -752,6 +765,24 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               </div>
               <p className="text-stone-400 text-xs mt-1 leading-relaxed">
                 ATM 或網路銀行。匯款帳號會寄到您的 Email，請於 {PAYMENT_DEADLINE_HOURS} 小時內完成匯款。
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPayment('linepay')}
+              aria-pressed={payment === 'linepay'}
+              className={`text-left p-3.5 rounded-xl border transition-colors ${
+                payment === 'linepay'
+                  ? 'border-green-400/60 bg-green-500/10'
+                  : 'border-white/10 bg-stone-900/60 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center gap-1.5 text-white font-bold text-sm">
+                <Smartphone size={15} className="text-green-400" /> LINE Pay
+              </div>
+              <p className="text-stone-400 text-xs mt-1 leading-relaxed">
+                賣家的 LINE ID 會寄到您的 Email，加好友後以 LINE Pay 轉帳，請於 {PAYMENT_DEADLINE_HOURS} 小時內完成。
               </p>
             </button>
 
@@ -889,7 +920,9 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 <p className="text-stone-400 text-[11px] leading-relaxed mt-3 text-center">
                   {payment === 'transfer'
                     ? `匯款帳號會寄到您的 Email，請於 ${PAYMENT_DEADLINE_HOURS} 小時內完成匯款，確認入帳後安排出貨。`
-                    : '請於自取或面交時付現，我們會與您聯繫約定時間地點。'}
+                    : payment === 'linepay'
+                      ? `賣家的 LINE ID 會寄到您的 Email，請於 ${PAYMENT_DEADLINE_HOURS} 小時內以 LINE Pay 完成付款，確認收款後安排出貨。`
+                      : '請於自取或面交時付現，我們會與您聯繫約定時間地點。'}
                 </p>
               </>
             ) : (
@@ -1059,7 +1092,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                     {delivery === 'ship'
                       ? <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">地址</dt><dd className="break-words">{address}</dd></div>
                       : pickupNote.trim() && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">說明</dt><dd className="break-words">{pickupNote}</dd></div>}
-                    <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">付款</dt><dd>{payment === 'cash' ? '取貨時付現' : '銀行轉帳'}{payment === 'transfer' && payerLabel && `（${payerLabel}）`}</dd></div>
+                    <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">付款</dt><dd>{payment === 'cash' ? '取貨時付現' : payment === 'linepay' ? 'LINE Pay' : '銀行轉帳'}{payment === 'transfer' && payerLabel && `（${payerLabel}）`}</dd></div>
                     {email && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">Email</dt><dd className="break-all">{email}</dd></div>}
                     {note && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">備註</dt><dd className="whitespace-pre-line break-words">{note}</dd></div>}
                   </dl>
