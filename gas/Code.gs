@@ -625,6 +625,8 @@ function paymentInstructions_(o) {
     ? '已記錄您的匯款資料' + payerLabel_(o) + '，入帳後我們會依此核對。'
     : '轉帳後請直接回覆本信，告知匯款人姓名或匯款帳號後五碼，方便我們核對。');
   lines.push('確認入帳後即安排出貨。');
+  lines.push('');
+  lines.push('※ 本店不會以電話或 LINE 通知更改匯款帳號。如收到類似通知，請勿匯款，並直接回覆本信或來電確認。');
   return lines.join('\n');
 }
 

@@ -692,7 +692,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               onChange={(e) => setPhone(e.target.value)} placeholder="0912-345-678" autoComplete="tel" />
           </Field>
 
-          <Field id="of-line" label="LINE ID" hint="選填，方便用 LINE 與您聯繫">
+          <Field id="of-line" label="LINE ID" hint="選填，可用於後續訂購聯繫事宜">
             <input id="of-line" className={inputClass} value={lineId} maxLength={50}
               onChange={(e) => setLineId(e.target.value)} placeholder="您的 LINE ID" autoComplete="off" />
           </Field>
@@ -791,7 +791,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               </Field>
               </div>
               <p className="text-stone-400 text-xs mt-2 leading-relaxed">
-                用來核對入帳。由家人代為轉帳的話，請填家人的姓名；還不確定用哪個帳戶，可以先留空，轉帳後回覆確認信告知即可。
+                用來核對入帳。還不確定用哪個帳戶轉帳的話，可以先留空，轉帳後回覆確認信告知即可。
               </p>
             </div>
           )}
