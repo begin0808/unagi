@@ -58,10 +58,16 @@ export function totalFillets(quantities: Quantities): number {
 export type Packaging = 'self' | 'gift';
 
 /**
- * 取貨方式：黑貓冷凍宅配，或到養鰻場自取／與店家約定面交。
- * 自取與面交不經過黑貓，運費一律為 0。
+ * 取貨方式：黑貓冷凍宅配，或在臺南指定地點面交。
+ * 面交不經過黑貓，運費一律為 0。
  */
 export type Delivery = 'ship' | 'pickup';
+
+/**
+ * 面交地點（限這三處擇一），賣家會打電話與顧客約時間。
+ * 需與 gas/Code.gs 的 PICKUP_SPOTS 一致。
+ */
+export const PICKUP_SPOTS = ['臺南永康全家永德店', '國立南大附中', '金葡萄蛋黃酥復國店'] as const;
 
 /**
  * 銀行轉帳的付款期限（小時）。
@@ -225,7 +231,7 @@ export function calcOrder(
   giftBoxes: number,
   /** 優惠碼每一階折抵的金額，0 代表未套用優惠碼 */
   promoValuePerStep = 0,
-  /** 取貨方式；自取／面交免運費 */
+  /** 取貨方式；面交免運費 */
   delivery: Delivery = 'ship',
 ): OrderTotals {
   const packs = PRODUCTS.reduce((sum, p) => sum + Math.max(0, quantities[p.id] || 0), 0);
@@ -253,7 +259,7 @@ export function calcOrder(
     extraBoxes,
     giftTotal,
     maxBoxes,
-    // 自取／面交本來就免運，不需要提示「再買幾公斤免運」
+    // 面交本來就免運，不需要提示「再買幾公斤免運」
     packsToFreeShipping:
       delivery === 'ship' && packs > 0 && packs < FREE_SHIPPING_PACKS
         ? FREE_SHIPPING_PACKS - packs

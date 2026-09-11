@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import {
   SPECS, PRICE_PER_KG, SHIPPING_TIERS, FREE_SHIPPING_PACKS, PAYMENT_DEADLINE_HOURS,
-  GIFT_BOX_CAPACITY, GIFT_BOX_PRICE,
+  GIFT_BOX_CAPACITY, GIFT_BOX_PRICE, PICKUP_SPOTS,
   calcOrder, currency,
   type Quantities, type SpecId, type Packaging, type Delivery,
 } from '../lib/pricing';
@@ -29,7 +29,7 @@ const FALLBACK_FORM_URL =
 
 type Step = 'form' | 'confirm' | 'sending' | 'done' | 'error';
 type PromoState = 'idle' | 'checking' | 'ok' | 'bad';
-/** 付款方式：銀行轉帳、LINE Pay，或取貨時付現（僅限自取／面交） */
+/** 付款方式：銀行轉帳、LINE Pay，或取貨時付現（僅限面交） */
 type Payment = 'transfer' | 'linepay' | 'cash';
 
 interface Props {
@@ -118,6 +118,7 @@ const FIELD_ORDER: [string, string][] = [
   ['name', 'of-name'],
   ['phone', 'of-phone'],
   ['address', 'of-address'],
+  ['pickupSpot', 'of-pickup-spot'],
   ['email', 'of-email'],
   ['last5', 'of-last5'],
   ['lineId', 'of-line'],
@@ -142,6 +143,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   // 取貨與付款
   const [delivery, setDelivery] = useState<Delivery>('ship');
   const [pickupNote, setPickupNote] = useState('');
+  const [pickupSpot, setPickupSpot] = useState('');
   const [payment, setPayment] = useState<Payment>('transfer');
   // 選 LINE Pay 時必填：由賣家加顧客好友傳送付款方式（賣家不公開自己的 LINE ID）
   const [lineId, setLineId] = useState('');
@@ -224,7 +226,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     if (v === 'gift' && giftBoxes < 1) setGiftBoxes(1);
   };
 
-  // 付現只限自取／面交：改回宅配時，付款方式一併改回轉帳
+  // 付現只限面交：改回宅配時，付款方式一併改回轉帳
   const chooseDelivery = (v: Delivery) => {
     setDelivery(v);
     if (v === 'ship' && payment === 'cash') setPayment('transfer');
@@ -293,10 +295,11 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     if (delivery === 'ship') {
       if (!address.trim()) next.address = '請填寫收件地址';
       else if (/自取|面交/.test(address))
-        next.address = '要自取或面交的話，請在上方「取貨方式」選擇「自取／面交」';
+        next.address = '要面交的話，請在上方「取貨方式」選擇「面交」';
       else if (address.trim().length < 8)
         next.address = '請填寫完整地址（含縣市與門牌號碼）';
     }
+    if (delivery === 'pickup' && !pickupSpot) next.pickupSpot = '請選擇面交地點';
     if (!email.trim()) next.email = '請填寫 Email，我們會寄送訂單確認信給您核對';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
       next.email = 'Email 格式看起來不正確';
@@ -332,7 +335,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   const [triedReview, setTriedReview] = useState(false);
   useEffect(() => {
     if (triedReview) validate();
-  }, [triedReview, name, phone, address, email, last5, lineId, delivery, payment, totals.packs]);
+  }, [triedReview, name, phone, address, email, last5, lineId, pickupSpot, delivery, payment, totals.packs]);
 
   const handleSubmit = async () => {
     setStep('sending');
@@ -348,6 +351,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
           name: name.trim(),
           phone: phone.trim(),
           address: (delivery === 'ship' ? address : pickupNote).trim(),
+          pickupSpot: delivery === 'pickup' ? pickupSpot : '',
           email: email.trim(),
           note: note.trim(),
           quantities,
@@ -393,6 +397,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setPromoState('idle');
     setDelivery('ship');
     setPickupNote('');
+    setPickupSpot('');
     setPayment('transfer');
     setLineId('');
     setPayerName('');
@@ -493,7 +498,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               <Banknote size={18} /> 取貨時付現 {currency(finalTotal)}
             </div>
             <p className="text-stone-300 text-sm leading-relaxed">
-              我們會盡快與您聯繫，約定自取或面交的時間與地點。
+              賣家會打電話與您約定面交時間（地點：{pickupSpot}）。
             </p>
           </div>
         )}
@@ -655,7 +660,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                     每個 {currency(GIFT_BOX_PRICE)}。
                   </p>
                   <p className="text-amber-300/90">
-                    禮盒會分開包裝、{delivery === 'pickup' ? '取貨時一併交給您' : '隨箱一起寄出'}，<strong className="text-amber-200">不會預先把鰻魚裝進去</strong>——
+                    禮盒會分開包裝、{delivery === 'pickup' ? '面交時一併交給您' : '隨箱一起寄出'}，<strong className="text-amber-200">不會預先把鰻魚裝進去</strong>——
                     紙盒與冷凍品放在一起容易受潮變軟。請您收到後冷凍保存，要送禮前再自行裝盒。
                   </p>
                   <p>禮盒與商品寄至同一個地址；需分別寄給不同收件人請分開下單。</p>
@@ -744,10 +749,10 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 }`}
               >
                 <div className="flex items-center gap-1.5 text-white font-bold text-sm">
-                  <MapPin size={15} className="text-green-400" /> 自取／面交
+                  <MapPin size={15} className="text-green-400" /> 面交（臺南）
                 </div>
                 <p className="text-stone-400 text-xs mt-1 leading-relaxed">
-                  到養鰻場自取或約定面交，免運費；時間地點由專人與您聯繫確認。
+                  限臺南三個地點擇一，免運費；賣家會打電話與您約時間。
                 </p>
               </button>
             </div>
@@ -771,11 +776,45 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 placeholder="臺南市 710 永康區○○路○○巷 100 號" autoComplete="street-address" />
             </Field>
           ) : (
-            <Field id="of-pickup" label="自取／面交說明" hint="選填，例如希望的日期時段或面交地點">
-              <input id="of-pickup" className={inputClass} value={pickupNote}
-                onChange={(e) => setPickupNote(e.target.value)}
-                placeholder="希望週六下午到養鰻場自取" autoComplete="off" />
-            </Field>
+            <>
+              <div id="of-pickup-spot" role="radiogroup" aria-label="面交地點">
+                <div className="text-sm font-bold text-stone-200 mb-1.5">
+                  面交地點<span className="text-red-400 ml-1">*</span>
+                  <span className="font-normal text-stone-400 text-xs ml-2">三處擇一，賣家會打電話與您約時間</span>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {PICKUP_SPOTS.map((spot) => (
+                    <button
+                      key={spot}
+                      type="button"
+                      role="radio"
+                      aria-checked={pickupSpot === spot}
+                      onClick={() => setPickupSpot(spot)}
+                      className={`text-left px-4 py-3 rounded-xl border text-sm transition-colors flex items-center gap-2 ${
+                        pickupSpot === spot
+                          ? 'border-green-400/60 bg-green-500/10 text-white font-bold'
+                          : errors.pickupSpot
+                            ? 'border-red-500/60 bg-stone-900 text-stone-200 hover:border-white/30'
+                            : 'border-white/15 bg-stone-900 text-stone-200 hover:border-white/30'
+                      }`}
+                    >
+                      <MapPin size={15} className={pickupSpot === spot ? 'text-green-400' : 'text-stone-500'} />
+                      {spot}
+                    </button>
+                  ))}
+                </div>
+                {errors.pickupSpot && (
+                  <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+                    <AlertTriangle size={12} /> {errors.pickupSpot}
+                  </p>
+                )}
+              </div>
+              <Field id="of-pickup" label="方便面交的時段" hint="選填，例如平日晚上、週六下午">
+                <input id="of-pickup" className={inputClass} value={pickupNote}
+                  onChange={(e) => setPickupNote(e.target.value)}
+                  placeholder="平日晚上 7 點後" autoComplete="off" />
+              </Field>
+            </>
           )}
 
           <Field id="of-email" label="Email" required hint="確認信與匯款帳號會寄到這裡，請確認填寫正確" error={errors.email}>
@@ -855,8 +894,8 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               </div>
               <p className="text-stone-400 text-xs mt-1 leading-relaxed">
                 {delivery === 'pickup'
-                  ? '自取或面交時當面付款。'
-                  : '僅限選擇「自取／面交」的訂單。'}
+                  ? '面交時當面付款。'
+                  : '僅限選擇「面交」的訂單。'}
               </p>
             </button>
           </div>
@@ -940,7 +979,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 <span className="flex items-center gap-1.5">
                   <Truck size={15} className="text-amber-400" /> 運費
                   <span className="text-stone-500 text-xs">
-                    {delivery === 'pickup' ? '（自取／面交）' : `（共 ${totals.packs} 公斤）`}
+                    {delivery === 'pickup' ? '（面交）' : `（共 ${totals.packs} 公斤）`}
                   </span>
                 </span>
                 <span className="font-bold whitespace-nowrap">
@@ -993,7 +1032,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                     ? `匯款帳號會寄到您的 Email，請於 ${PAYMENT_DEADLINE_HOURS} 小時內完成匯款，確認入帳後安排出貨。`
                     : payment === 'linepay'
                       ? `賣家會加您的 LINE 好友並傳送付款方式，請於 ${PAYMENT_DEADLINE_HOURS} 小時內以 LINE Pay 完成付款，確認收款後安排出貨。`
-                      : '請於自取或面交時付現，我們會與您聯繫約定時間地點。'}
+                      : '請於面交時付現，賣家會打電話與您約定時間。'}
                 </p>
               </>
             ) : (
@@ -1028,7 +1067,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 </li>
               ))}
               <li className="flex justify-between gap-3 pt-1.5 border-t border-white/10">
-                <span>自取／面交</span>
+                <span>臺南面交</span>
                 <span className="font-bold whitespace-nowrap text-green-400">免運費</span>
               </li>
             </ul>
@@ -1138,7 +1177,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                       </div>
                     )}
                     <div className="flex justify-between text-stone-300 pt-2 border-t border-white/10">
-                      <span>{delivery === 'pickup' ? '運費（自取／面交）' : `運費（${totals.packs} 公斤）`}</span>
+                      <span>{delivery === 'pickup' ? '運費（面交）' : `運費（${totals.packs} 公斤）`}</span>
                       <span className="font-bold">
                         {totals.shipping === 0 ? <span className="text-green-400">免運費</span> : currency(totals.shipping)}
                       </span>
@@ -1158,10 +1197,13 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                   <dl className="bg-stone-900 rounded-xl p-4 space-y-2 text-stone-300 border border-white/10">
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">姓名</dt><dd>{name}</dd></div>
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">電話</dt><dd>{phone}</dd></div>
-                    <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">取貨</dt><dd>{delivery === 'pickup' ? '自取／面交（免運費）' : '黑貓冷凍宅配'}</dd></div>
+                    <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">取貨</dt><dd>{delivery === 'pickup' ? '面交（免運費）' : '黑貓冷凍宅配'}</dd></div>
                     {delivery === 'ship'
                       ? <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">地址</dt><dd className="break-words">{address}</dd></div>
-                      : pickupNote.trim() && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">說明</dt><dd className="break-words">{pickupNote}</dd></div>}
+                      : <>
+                          <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">地點</dt><dd className="break-words">{pickupSpot}</dd></div>
+                          {pickupNote.trim() && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">時段</dt><dd className="break-words">{pickupNote}</dd></div>}
+                        </>}
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">付款</dt><dd>{payment === 'cash' ? '取貨時付現' : payment === 'linepay' ? 'LINE Pay' : '銀行轉帳'}{payment === 'transfer' && payerLabel && `（${payerLabel}）`}</dd></div>
                     {payment === 'linepay' && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">LINE ID</dt><dd className="break-all">{lineId}</dd></div>}
                     {email && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">Email</dt><dd className="break-all">{email}</dd></div>}

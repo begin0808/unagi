@@ -69,6 +69,12 @@ const PAYMENT_DEADLINE_HOURS = 48;
 const STATUS_OPTIONS = ['待付款', '待取貨', '已付款', '已出貨', '已完成', '已取消', '待確認'];
 
 /**
+ * 面交地點（限這三處擇一），賣家會打電話與顧客約時間。
+ * 需與網站 src/lib/pricing.ts 的 PICKUP_SPOTS 一致。
+ */
+const PICKUP_SPOTS = ['臺南永康全家永德店', '國立南大附中', '金葡萄蛋黃酥復國店'];
+
+/**
  * 優惠碼清單 —— 這是整套系統唯一存放優惠碼與折扣額度的地方。
  *
  * ⚠️ 絕對不要把優惠碼寫進網站的程式碼裡。
@@ -194,7 +200,7 @@ function doPost(e) {
     const freeBoxes = Math.min(boxes, freeGiftBoxes(packs));
     const extraBoxes = Math.max(0, boxes - freeBoxes);
 
-    // 取貨與付款：付現只限自取／面交；其餘為銀行轉帳或 LINE Pay（前端已限制，這裡再擋一次）
+    // 取貨與付款：付現只限面交；其餘為銀行轉帳或 LINE Pay（前端已限制，這裡再擋一次）
     const delivery = data.delivery === 'pickup' ? 'pickup' : 'ship';
     const payment = data.payment === 'cash' && delivery === 'pickup' ? 'cash'
       : data.payment === 'linepay' ? 'linepay'
@@ -202,10 +208,12 @@ function doPost(e) {
     // 只留數字；若客人填了整串帳號，取最後五碼
     const last5 = payment === 'transfer' ? String(data.last5 || '').replace(/[^0-9]/g, '').slice(-5) : '';
     const payerName = payment === 'transfer' ? String(data.payerName || '').trim().slice(0, 30) : '';
+    const pickupSpot = delivery === 'pickup' ? String(data.pickupSpot || '').trim() : '';
 
     if (!name) return json({ ok: false, message: '缺少收件人姓名' });
     if (!phone) return json({ ok: false, message: '缺少聯絡電話' });
     if (delivery === 'ship' && !address) return json({ ok: false, message: '缺少收件地址' });
+    if (delivery === 'pickup' && PICKUP_SPOTS.indexOf(pickupSpot) === -1) return json({ ok: false, message: '請選擇面交地點' });
     if (payment === 'linepay' && !lineId) return json({ ok: false, message: '選擇 LINE Pay 請填寫 LINE ID' });
     // Email 為必填：顧客要靠確認信核對訂單內容，避免到貨後爭議
     if (!email) return json({ ok: false, message: '缺少 Email' });
@@ -216,7 +224,7 @@ function doPost(e) {
     // 金額一律由後端重算
     const itemsTotal = packs * PRICE_PER_KG;
     const giftTotal = extraBoxes * GIFT_BOX_PRICE;
-    const shipping = delivery === 'pickup' ? 0 : shippingFee(packs); // 自取／面交不經黑貓，免運
+    const shipping = delivery === 'pickup' ? 0 : shippingFee(packs); // 面交不經黑貓，免運
 
     // 優惠碼再驗一次：前端說「已套用」不算數，這裡說了才算
     const promoCode = normalizePromo_(data.promoCode);
@@ -231,6 +239,11 @@ function doPost(e) {
 
     const total = itemsTotal + giftTotal + shipping - discount;
 
+    // 試算表「地址」欄：面交訂單記地點與顧客方便的時段
+    const addressCell = delivery === 'pickup'
+      ? '面交：' + pickupSpot + (address ? '（' + address + '）' : '')
+      : address;
+
     // 用鎖避免同時下單時訂單編號重複
     const lock = LockService.getScriptLock();
     lock.waitLock(20000);
@@ -244,11 +257,11 @@ function doPost(e) {
 
       // 電話、LINE ID、後五碼前面加 '，強制以文字存入，避免開頭的 0 被試算表當成數字吃掉
       sheet.appendRow([
-        orderNo, now, name, "'" + phone, address, email, lineId ? "'" + lineId : '',
+        orderNo, now, name, "'" + phone, addressCell, email, lineId ? "'" + lineId : '',
         qa, qb, qc, packs, packaging === 'gift' ? '送禮' : '自用', boxes,
         itemsTotal, giftTotal, shipping, promoCode, discount,
         total,
-        delivery === 'pickup' ? '自取／面交' : '宅配',
+        delivery === 'pickup' ? '面交' : '宅配',
         paymentLabel_(payment),
         payerName,
         last5 ? "'" + last5 : '',
@@ -273,7 +286,7 @@ function doPost(e) {
       itemsTotal: itemsTotal, packaging: packaging, shipping: shipping,
       freeBoxes: freeBoxes, extraBoxes: extraBoxes, giftTotal: giftTotal,
       promoCode: promoCode, discount: discount, total: total,
-      delivery: delivery, payment: payment, payerName: payerName, last5: last5,
+      delivery: delivery, pickupSpot: pickupSpot, payment: payment, payerName: payerName, last5: last5,
       payDeadline: payDeadline, bank: bank,
     };
 
@@ -588,7 +601,7 @@ function orderBody_(o) {
         (o.extraBoxes ? '、加購 ' + o.extraBoxes + ' 個 ' + money_(o.giftTotal) : '') + '）'
       : '自用（不附禮盒）'),
     o.delivery === 'pickup'
-      ? '運費：自取／面交，免運費'
+      ? '運費：面交，免運費'
       : '運費（共 ' + o.packs + ' 公斤）：' + (o.shipping === 0 ? '免運費' : money_(o.shipping)),
     o.discount > 0 ? '優惠碼折抵（' + o.promoCode + '）：-' + money_(o.discount) : '',
     '應付總金額：' + money_(o.total),
@@ -598,9 +611,9 @@ function orderBody_(o) {
     '【收件資料】',
     '姓名：' + o.name,
     '電話：' + o.phone,
-    '取貨方式：' + (o.delivery === 'pickup' ? '自取／面交' : '黑貓冷凍宅配'),
+    '取貨方式：' + (o.delivery === 'pickup' ? '面交' : '黑貓冷凍宅配'),
     o.delivery === 'pickup'
-      ? (o.address ? '自取／面交說明：' + o.address : '')
+      ? '面交地點：' + o.pickupSpot + (o.address ? '\n方便時段：' + o.address : '')
       : '地址：' + o.address,
     o.email ? 'Email：' + o.email : '',
     o.note ? '備註：' + o.note : '',
@@ -626,7 +639,7 @@ function payerLabel_(o) {
 function paymentInstructions_(o) {
   if (o.payment === 'cash') {
     return ['【付款資訊】',
-      '請於自取／面交時付現 ' + money_(o.total) + '，我們會盡快與您聯繫，約定時間與地點。',
+      '請於面交時付現 ' + money_(o.total) + '。',
     ].join('\n');
   }
   if (o.payment === 'linepay') {
@@ -671,6 +684,9 @@ function notifyShop_(o) {
       + (o.payment === 'linepay'
         ? '\n\n➜ 請用 LINE 搜尋 ID「' + o.lineId + '」加顧客好友，傳送 LINE Pay 付款方式。'
         : '')
+      + (o.delivery === 'pickup'
+        ? '\n\n➜ 請打電話與顧客約定面交時間（地點：' + o.pickupSpot + '）。'
+        : '')
       + '\n\n—\n本信由訂單系統自動發送。',
   });
 }
@@ -688,8 +704,11 @@ function notifyCustomer_(o) {
       '',
       paymentInstructions_(o),
       '',
+      o.delivery === 'pickup'
+        ? '【面交】\n地點：' + o.pickupSpot + '\n我們會打電話與您約定面交時間。\n'
+        : '',
       o.boxes > 0
-        ? '※ 禮盒會分開包裝、' + (o.delivery === 'pickup' ? '取貨時一併交給您' : '隨同一箱寄出') +
+        ? '※ 禮盒會分開包裝、' + (o.delivery === 'pickup' ? '面交時一併交給您' : '隨同一箱寄出') +
           '，不會預先把鰻魚裝進去（紙盒與冷凍品放在一起容易受潮）。' +
           '\n　 請收到後先將鰻魚冷凍保存，要送禮前再自行裝盒。\n'
         : '',

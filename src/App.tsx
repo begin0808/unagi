@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import OrderForm from './components/OrderForm';
 import {
-  PRODUCTS, EMPTY_QUANTITIES, shippingFaqLines, PRICE_PER_KG, PAYMENT_DEADLINE_HOURS, currency,
+  PRODUCTS, EMPTY_QUANTITIES, shippingFaqLines, PRICE_PER_KG, PAYMENT_DEADLINE_HOURS, PICKUP_SPOTS, currency,
   type Quantities, type SpecId,
 } from './lib/pricing';
 import { PHONES, CONTACT_EMAIL, formatPhone, telHref, phoneListText } from './lib/contact';
@@ -30,7 +30,7 @@ const FAQS = [
       "宅配訂單可選擇銀行轉帳（ATM 或網路銀行）或 LINE Pay 付款。選擇轉帳，送出訂單後匯款帳號會寄到您填寫的 Email（訂單確認信）；選擇 LINE Pay 請填寫您的 LINE ID，賣家會加您好友並傳送付款方式。\n" +
       "請於下單後 " + PAYMENT_DEADLINE_HOURS + " 小時內完成付款，確認收款後即安排出貨。使用 LINE Pay 轉帳時，請在留言填寫訂單編號。\n\n" +
       "下單時可以先填匯款人姓名或匯款帳號後五碼，方便我們核對；若還不確定會用哪個帳戶轉帳，轉帳後直接回覆確認信告知即可。\n\n" +
-      "選擇自取或面交的訂單，除了轉帳與 LINE Pay 之外，也可以在取貨時當面付現。自取與面交不經黑貓配送，免運費。"
+      "也可以選擇在臺南面交（" + PICKUP_SPOTS.join("、") + "，三處擇一），賣家會打電話與您約時間。面交免運費，除了轉帳與 LINE Pay 之外，也可以當面付現。"
   },
   {
     question: "保存方式為何？未開封可以冷凍保存多久？",
@@ -64,7 +64,7 @@ const FAQS = [
     answer:
       "歡迎直接來電，訂購專線：" + phoneListText() + "\n" +
       "Email：" + CONTACT_EMAIL + "\n" +
-      "到貨時間、指定日期、自取或面交、大量訂購與送禮包裝需求，都可以先與我們討論。"
+      "到貨時間、指定日期、面交、大量訂購與送禮包裝需求，都可以先與我們討論。"
   },
   {
     question: "退換貨政策：若收到商品有瑕疵或解凍該如何處理？",
@@ -683,7 +683,7 @@ const App = () => {
                   <span className="inline-block">我們也會由專人與您聯繫，</span>
                   <span className="inline-block">確認出貨或取貨時間；</span>
                   <span className="inline-block">中秋等節慶檔期物流較繁忙，建議提早下單。</span>
-                  <span className="inline-block">到貨時間、指定日期、自取或面交、</span>
+                  <span className="inline-block">到貨時間、指定日期、面交、</span>
                   <span className="inline-block">大量訂購與送禮包裝，</span>
                   <span className="inline-block">歡迎先來電洽詢（聯絡電話見頁尾）。</span>
                 </p>
