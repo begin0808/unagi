@@ -56,6 +56,13 @@ npm run preview  # 預覽建置結果
 轉帳訂單成立後只寫進顧客確認信，不回傳給網頁（要填真實的 Email 才拿得到帳號）。
 付款期限 `PAYMENT_DEADLINE_HOURS` 在 `pricing.ts` 與 `Code.gs` 各有一份，改動時兩邊都要改。
 
+### 南大附中合作社專屬頁
+
+`nda.html`（入口 `src/nda.tsx` → `src/NdaApp.tsx` → `src/components/NdaOrderForm.tsx`）是給校內同仁的精簡訂購頁：
+取貨與付款固定為「合作社取貨、取貨時付款」，只問姓名與備註，不要電話、地址與 Email，也沒有優惠碼與運費。
+送單時帶 `channel: 'nda'`，後端會再次強制這些規則並改用 `NDA` 開頭的訂單編號，訂單寫進同一份試算表。
+表單的共用小元件放在 `src/components/FormParts.tsx`，送單網址放在 `src/lib/orderApi.ts`，兩個表單共用。
+
 ### 優惠碼
 
 優惠碼與各自的折扣額度只存在 `gas/Code.gs` 的 `PROMO_CODES`，

@@ -70,6 +70,12 @@ export type Delivery = 'ship' | 'pickup';
 export const PICKUP_SPOTS = ['臺南永康全家永德店', '國立南大附中', '金葡萄蛋黃酥復國店'] as const;
 
 /**
+ * 南大附中合作社專屬訂購頁（nda.html）的取貨地點。
+ * 需與 gas/Code.gs 的 NDA_PICKUP_LABEL 一致。
+ */
+export const NDA_PICKUP_LABEL = '南大附中合作社';
+
+/**
  * 銀行轉帳的付款期限（小時）。
  * 需與 gas/Code.gs 的 PAYMENT_DEADLINE_HOURS 一致；實際截止時間由後端計算後回傳。
  */
