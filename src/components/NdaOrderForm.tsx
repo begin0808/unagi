@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ShoppingBag, CheckCircle2, AlertTriangle, Loader2, X, ExternalLink,
-  Gift, Leaf, ClipboardList, Banknote, MapPin, Camera,
+  Gift, Leaf, ClipboardList, Banknote, MapPin,
 } from 'lucide-react';
 import {
   SPECS, PRICE_PER_KG, GIFT_BOX_CAPACITY, GIFT_BOX_PRICE, NDA_PICKUP_LABEL,
@@ -22,13 +22,14 @@ interface Props {
 const FIELD_ORDER: [string, string][] = [
   ['packs', 'nda-specs'],
   ['name', 'nda-name'],
+  ['email', 'nda-email'],
 ];
 
 /**
  * 南大附中合作社專屬訂購表單。
  *
  * 與主訂購表單的差別：取貨與付款方式固定（合作社取貨、取貨時付款、免運費），
- * 只問姓名與備註——不要電話、地址與 Email，也沒有優惠碼。
+ * 只問姓名與 Email（訂單確認信要寄過去），不要電話與地址，也沒有優惠碼。
  * 後端會依 channel: 'nda' 再次強制這些規則，不採信瀏覽器送來的值。
  */
 const NdaOrderForm = ({ quantities, setQuantities }: Props) => {
@@ -37,6 +38,7 @@ const NdaOrderForm = ({ quantities, setQuantities }: Props) => {
   // 包數變少導致禮盒超過上限時，自動下修並提示
   const [boxAdjusted, setBoxAdjusted] = useState(false);
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [note, setNote] = useState('');
   const [company, setCompany] = useState(''); // honeypot：真人看不到也不會填
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,6 +75,9 @@ const NdaOrderForm = ({ quantities, setQuantities }: Props) => {
     const next: Record<string, string> = {};
     if (totals.packs < 1) next.packs = '請至少選擇 1 公斤的商品';
     if (!name.trim()) next.name = '請填寫訂購人姓名，合作社點交時要核對';
+    if (!email.trim()) next.email = '請填寫 Email，我們會寄送訂單確認信給您核對';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+      next.email = 'Email 格式看起來不正確';
     setErrors(next);
     return next;
   };
@@ -80,7 +85,7 @@ const NdaOrderForm = ({ quantities, setQuantities }: Props) => {
   // 按過一次「確認訂單內容」之後，邊填邊重新檢查
   useEffect(() => {
     if (triedReview) validate();
-  }, [triedReview, name, totals.packs]);
+  }, [triedReview, name, email, totals.packs]);
 
   const handleReview = () => {
     setTriedReview(true);
@@ -109,6 +114,7 @@ const NdaOrderForm = ({ quantities, setQuantities }: Props) => {
         body: JSON.stringify({
           channel: 'nda',
           name: name.trim(),
+          email: email.trim(),
           note: note.trim(),
           quantities,
           packaging,
@@ -136,6 +142,7 @@ const NdaOrderForm = ({ quantities, setQuantities }: Props) => {
     setGiftBoxes(1);
     setBoxAdjusted(false);
     setName('');
+    setEmail('');
     setNote('');
     setErrors({});
     setTriedReview(false);
@@ -171,10 +178,11 @@ const NdaOrderForm = ({ quantities, setQuantities }: Props) => {
           </p>
         </div>
 
-        {/* 這個管道沒有留 Email，訂單編號只會出現在這個畫面 */}
-        <p className="text-amber-300 text-sm sm:text-base leading-relaxed max-w-md mx-auto mb-8 flex items-center justify-center gap-2 [text-wrap:balance]">
-          <Camera size={16} className="flex-shrink-0" />
-          <span className="inline-block">請截圖保存這個畫面，取貨時報訂單編號或姓名即可。</span>
+        <p className="text-stone-400 text-sm sm:text-base leading-relaxed max-w-md mx-auto mb-8 [text-wrap:balance]">
+          <span className="inline-block">訂單確認信已寄至您填寫的 Email，</span>
+          <span className="inline-block">請收信核對訂購內容。</span>
+          <span className="inline-block">若有任何需要更正的地方，</span>
+          <span className="inline-block">直接回覆該封信件告知我們即可。</span>
         </p>
 
         <button
@@ -341,6 +349,11 @@ const NdaOrderForm = ({ quantities, setQuantities }: Props) => {
             onChange={(e) => setName(e.target.value)} placeholder="王小明" autoComplete="name" />
         </Field>
 
+        <Field id="nda-email" label="Email" required hint="訂單確認信會寄到這裡，請確認填寫正確" error={errors.email}>
+          <input id="nda-email" aria-invalid={!!errors.email} className={inputClass} value={email} type="email"
+            onChange={(e) => setEmail(e.target.value)} placeholder="you@gmail.com" autoComplete="email" />
+        </Field>
+
         <Field id="nda-note" label="備註" hint="選填，例如希望的取貨時間">
           <textarea id="nda-note" className={`${inputClass} min-h-[80px] resize-y`} value={note}
             onChange={(e) => setNote(e.target.value)} placeholder="想在中秋前一週取貨" />
@@ -446,7 +459,7 @@ const NdaOrderForm = ({ quantities, setQuantities }: Props) => {
           </p>
         )}
         <p className="text-stone-400 text-[11px] leading-relaxed mt-3 text-center">
-          送出後請截圖保存訂單編號；到貨後我們會通知您到合作社取貨並付款。
+          送出後會寄一封訂單確認信到您的 Email；到貨後我們會通知您到合作社取貨並付款。
         </p>
       </div>
 
@@ -539,6 +552,7 @@ const NdaOrderForm = ({ quantities, setQuantities }: Props) => {
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">姓名</dt><dd>{name}</dd></div>
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">取貨</dt><dd>{NDA_PICKUP_LABEL}（免運費）</dd></div>
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">付款</dt><dd>取貨時付款</dd></div>
+                    <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">Email</dt><dd className="break-all">{email}</dd></div>
                     {note && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">備註</dt><dd className="whitespace-pre-line break-words">{note}</dd></div>}
                   </dl>
                 </div>

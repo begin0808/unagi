@@ -76,7 +76,7 @@ const PICKUP_SPOTS = ['臺南永康全家永德店', '國立南大附中', '金�
 
 /**
  * 南大附中合作社專屬訂購頁（網站的 nda.html）的取貨地點。
- * 這個管道不問電話、地址與 Email，付款固定為「取貨時付款」，運費 0。
+ * 這個管道不問電話與地址，付款固定為「取貨時付款」，運費 0；Email 仍為必填（要寄確認信）。
  * 需與網站 src/lib/pricing.ts 的 NDA_PICKUP_LABEL 一致。
  */
 const NDA_PICKUP_LABEL = '南大附中合作社';
@@ -231,9 +231,8 @@ function doPost(e) {
     if (delivery === 'ship' && !address) return json({ ok: false, message: '缺少收件地址' });
     if (channel !== 'nda' && delivery === 'pickup' && PICKUP_SPOTS.indexOf(pickupSpot) === -1) return json({ ok: false, message: '請選擇面交地點' });
     if (payment === 'linepay' && !lineId) return json({ ok: false, message: '選擇 LINE Pay 請填寫 LINE ID' });
-    // Email 為必填：顧客要靠確認信核對訂單內容，避免到貨後爭議。
-    // 南大附中合作社的訂單當面點交，不寄確認信，因此不要求 Email。
-    if (channel !== 'nda' && !email) return json({ ok: false, message: '缺少 Email' });
+    // Email 為必填：顧客要靠確認信核對訂單內容，避免到貨後爭議（南大附中的訂單也一樣）
+    if (!email) return json({ ok: false, message: '缺少 Email' });
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ ok: false, message: 'Email 格式不正確' });
     if (packs < 1) return json({ ok: false, message: '訂單數量為 0' });
     if (packs > 200) return json({ ok: false, message: '訂單數量異常' });
@@ -621,9 +620,11 @@ function orderBody_(o) {
       ? '送禮（禮盒 ' + o.boxes + ' 個，其中免費 ' + o.freeBoxes +
         (o.extraBoxes ? '、加購 ' + o.extraBoxes + ' 個 ' + money_(o.giftTotal) : '') + '）'
       : '自用（不附禮盒）'),
-    o.delivery === 'pickup'
-      ? '運費：面交，免運費'
-      : '運費（共 ' + o.packs + ' 公斤）：' + (o.shipping === 0 ? '免運費' : money_(o.shipping)),
+    o.channel === 'nda'
+      ? '運費：' + NDA_PICKUP_LABEL + '取貨，免運費'
+      : o.delivery === 'pickup'
+        ? '運費：面交，免運費'
+        : '運費（共 ' + o.packs + ' 公斤）：' + (o.shipping === 0 ? '免運費' : money_(o.shipping)),
     o.discount > 0 ? '優惠碼折抵（' + o.promoCode + '）：-' + money_(o.discount) : '',
     '應付總金額：' + money_(o.total),
     '付款方式：' + paymentLabel_(o.payment) + (o.payment === 'transfer' ? payerLabel_(o)
@@ -737,7 +738,7 @@ function notifyCustomer_(o) {
           ? '【面交】\n地點：' + o.pickupSpot + '\n我們會打電話與您約定面交時間。\n'
           : '',
       o.boxes > 0
-        ? '※ 禮盒會分開包裝、' + (o.delivery === 'pickup' ? '面交時一併交給您' : '隨同一箱寄出') +
+        ? '※ 禮盒會分開包裝、' + (o.channel === 'nda' ? '取貨時一併交給您' : o.delivery === 'pickup' ? '面交時一併交給您' : '隨同一箱寄出') +
           '，不會預先把鰻魚裝進去（紙盒與冷凍品放在一起容易受潮）。' +
           '\n　 請收到後先將鰻魚冷凍保存，要送禮前再自行裝盒。\n'
         : '',

@@ -59,7 +59,7 @@ npm run preview  # 預覽建置結果
 ### 南大附中合作社專屬頁
 
 `nda.html`（入口 `src/nda.tsx` → `src/NdaApp.tsx` → `src/components/NdaOrderForm.tsx`）是給校內同仁的精簡訂購頁：
-取貨與付款固定為「合作社取貨、取貨時付款」，只問姓名與備註，不要電話、地址與 Email，也沒有優惠碼與運費。
+取貨與付款固定為「合作社取貨、取貨時付款」，只問姓名、Email 與備註，不要電話與地址，也沒有優惠碼與運費。
 送單時帶 `channel: 'nda'`，後端會再次強制這些規則並改用 `NDA` 開頭的訂單編號，訂單寫進同一份試算表。
 表單的共用小元件放在 `src/components/FormParts.tsx`，送單網址放在 `src/lib/orderApi.ts`，兩個表單共用。
 

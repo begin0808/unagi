@@ -14,7 +14,7 @@ const SHORT_NAME: Record<string, string> = Object.fromEntries(SPECS.map((s) => [
  * 南大附中合作社專屬訂購頁（nda.html）。
  *
  * 主網站是對外的行銷頁；這一頁只給校內同仁使用，
- * 取貨與付款方式固定，不問電話、地址與 Email，也沒有優惠碼與宅配運費。
+ * 取貨與付款方式固定，只問姓名與 Email，不問電話與地址，也沒有優惠碼與宅配運費。
  */
 const NdaApp = () => {
   const [quantities, setQuantities] = useState<Quantities>({ ...EMPTY_QUANTITIES });
@@ -152,8 +152,9 @@ const NdaApp = () => {
               <span className="inline-block">取貨時當面付款，免運費。</span>
             </p>
             <p>
-              <span className="inline-block">這個頁面不會寄送訂單確認信，</span>
-              <span className="inline-block">請在送出後截圖保存訂單編號。</span>
+              <span className="inline-block">送出後會立即寄一封訂單確認信，</span>
+              <span className="inline-block">請至您填寫的 Email 收信核對；</span>
+              <span className="inline-block">內容有誤直接回覆該封信告知即可。</span>
             </p>
             <p>
               <span className="inline-block">未開封冷凍（-18°C 以下）可保存 2 年，</span>
