@@ -450,9 +450,9 @@ const NdaOrderForm = ({ quantities, setQuantities }: Props) => {
             onChange={(e) => setEmail(e.target.value)} placeholder="you@gmail.com" autoComplete="email" />
         </Field>
 
-        <Field id="nda-note" label="備註" hint="選填，例如希望的取貨時間">
+        <Field id="nda-note" label="備註" hint="選填，例如發票抬頭">
           <textarea id="nda-note" className={`${inputClass} min-h-[80px] resize-y`} value={note}
-            onChange={(e) => setNote(e.target.value)} placeholder="想在中秋前一週取貨" />
+            onChange={(e) => setNote(e.target.value)} placeholder="有什麼想告訴我們的，可以寫在這裡" />
         </Field>
 
         {/* honeypot：以 CSS 隱藏，機器人才會填 */}

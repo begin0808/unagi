@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  ShoppingBag, ChevronDown, MessageCircle, MapPin, Phone, 
+  ShoppingBag, ChevronDown, MessageCircle, MapPin, 
   Clock, CheckCircle, Award, Sparkles, Flame, Truck, 
   Utensils, ExternalLink, HelpCircle, ChevronRight, Gift, Mail
 } from 'lucide-react';
@@ -9,7 +9,7 @@ import {
   PRODUCTS, EMPTY_QUANTITIES, shippingFaqLines, PRICE_PER_KG, PAYMENT_DEADLINE_HOURS, PICKUP_SPOTS, currency,
   type Quantities, type SpecId,
 } from './lib/pricing';
-import { PHONES, CONTACT_EMAIL, formatPhone, telHref, phoneListText } from './lib/contact';
+import { CONTACT_EMAIL } from './lib/contact';
 
 // --- 常見問題資料 (FAQ) ---
 const FAQS = [
@@ -62,8 +62,8 @@ const FAQS = [
   {
     question: "想先詢問或訂單有問題，要怎麼聯絡你們？",
     answer:
-      "歡迎直接來電，訂購專線：" + phoneListText() + "\n" +
-      "Email：" + CONTACT_EMAIL + "\n" +
+      "歡迎來信：" + CONTACT_EMAIL + "\n" +
+      "訂單送出後會收到確認信，直接回覆那封信也找得到我們。\n" +
       "到貨時間、指定日期、面交、大量訂購與送禮包裝需求，都可以先與我們討論。"
   },
   {
@@ -685,7 +685,7 @@ const App = () => {
                   <span className="inline-block">中秋等節慶檔期物流較繁忙，建議提早下單。</span>
                   <span className="inline-block">到貨時間、指定日期、面交、</span>
                   <span className="inline-block">大量訂購與送禮包裝，</span>
-                  <span className="inline-block">歡迎先來電洽詢（聯絡電話見頁尾）。</span>
+                  <span className="inline-block">歡迎先來信洽詢（信箱見頁尾）。</span>
                 </p>
               </div>
             </div>
@@ -703,22 +703,7 @@ const App = () => {
             <span className="font-bold text-lg tracking-wider text-white">興旺蒲燒鰻</span>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-5 mb-3">
-            <span className="flex items-center gap-1.5 text-stone-400 text-sm">
-              <Phone size={16} className="text-amber-500" /> 訂購專線
-            </span>
-            <div className="flex flex-wrap justify-center gap-x-5 gap-y-1.5">
-              {PHONES.map((p) => (
-                <a
-                  key={p}
-                  href={telHref(p)}
-                  className="text-white font-bold tracking-wide hover:text-amber-400 transition-colors whitespace-nowrap"
-                >
-                  {formatPhone(p)}
-                </a>
-              ))}
-            </div>
-          </div>
+          <div className="text-stone-400 text-sm mb-2">訂購與客服請來信</div>
 
           <div className="mb-5">
             <a

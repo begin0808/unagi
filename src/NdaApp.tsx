@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Award, Flame, Utensils, Clock, CheckCircle, AlertTriangle, Phone, MapPin, ExternalLink } from 'lucide-react';
+import { Award, Flame, Utensils, Clock, CheckCircle, AlertTriangle, Mail, MapPin, ExternalLink } from 'lucide-react';
 import NdaOrderForm from './components/NdaOrderForm';
 import {
   PRODUCTS, SPECS, EMPTY_QUANTITIES, PRICE_PER_KG, NDA_PICKUP_LABEL, currency,
   type Quantities, type SpecId,
 } from './lib/pricing';
-import { PHONES, formatPhone, telHref } from './lib/contact';
+import { CONTACT_EMAIL } from './lib/contact';
 
 /** 規格卡用訂購表單裡的短名稱，長名稱在窄卡片裡會從括號中間斷行 */
 const SHORT_NAME: Record<string, string> = Object.fromEntries(SPECS.map((s) => [s.id, s.name]));
@@ -167,21 +167,14 @@ const NdaApp = () => {
       {/* 頁尾 */}
       <footer className="bg-stone-950 py-10 border-t border-white/10 text-center">
         <div className="max-w-3xl mx-auto px-4 space-y-3">
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-5">
-            <span className="flex items-center gap-1.5 text-stone-400 text-sm">
-              <Phone size={16} className="text-amber-500" /> 訂購專線
-            </span>
-            <div className="flex flex-wrap justify-center gap-x-5 gap-y-1.5">
-              {PHONES.map((p) => (
-                <a
-                  key={p}
-                  href={telHref(p)}
-                  className="text-white font-bold tracking-wide hover:text-amber-400 transition-colors whitespace-nowrap"
-                >
-                  {formatPhone(p)}
-                </a>
-              ))}
-            </div>
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-1.5 sm:gap-3">
+            <span className="text-stone-400 text-sm">訂購與客服請來信</span>
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="text-white font-bold hover:text-amber-400 transition-colors inline-flex items-center gap-1.5 break-all"
+            >
+              <Mail size={15} className="text-amber-500 flex-shrink-0" /> {CONTACT_EMAIL}
+            </a>
           </div>
           <p className="text-stone-400 text-sm flex items-center justify-center gap-1.5">
             <MapPin size={15} className="text-amber-500" />
