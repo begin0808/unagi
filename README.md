@@ -51,17 +51,10 @@ npm run preview  # 預覽建置結果
 
 ### 付款方式
 
-宅配訂單可選銀行轉帳或 LINE Pay；臺南面交（`PICKUP_SPOTS` 三處擇一）的訂單另可選取貨時付現，且免運費。
+宅配訂單可選銀行轉帳或 LINE Pay；面交（`PICKUP_AREAS`：1 公斤限鹿港，2 公斤以上可選彰化市或鹿港）的訂單另可選取貨時付現，且免運費。
 收款帳戶設定在 `gas/Code.gs` 的 `BANK_INFO`（帳號建議只在 Apps Script 裡填）；LINE Pay 則由賣家加顧客填寫的 LINE ID 好友後傳送付款方式。
 轉帳訂單成立後只寫進顧客確認信，不回傳給網頁（要填真實的 Email 才拿得到帳號）。
 付款期限 `PAYMENT_DEADLINE_HOURS` 在 `pricing.ts` 與 `Code.gs` 各有一份，改動時兩邊都要改。
-
-### 南大附中合作社專屬頁
-
-`nda.html`（入口 `src/nda.tsx` → `src/NdaApp.tsx` → `src/components/NdaOrderForm.tsx`）是給校內同仁的精簡訂購頁：
-取貨與付款固定為「合作社取貨、取貨時付款」，只問姓名、Email 與備註，不要電話與地址，沒有運費；優惠碼與主站共用同一套驗證。
-送單時帶 `channel: 'nda'`，後端會再次強制這些規則並改用 `NDA` 開頭的訂單編號，訂單寫進同一份試算表。
-表單的共用小元件放在 `src/components/FormParts.tsx`，送單網址放在 `src/lib/orderApi.ts`，兩個表單共用。
 
 ### 優惠碼
 

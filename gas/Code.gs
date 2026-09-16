@@ -35,7 +35,7 @@ const SHEET_NAME = '訂單';
  * 每筆訂單會寄給「顧客 1 位 + 這裡列的每一位」，
  * 例如這裡填 2 個人，一筆訂單就用掉 3 個額度。
  */
-const NOTIFY_EMAIL = 'begin0808@gmail.com, lynnyl168168@gmail.com';
+const NOTIFY_EMAIL = 'xingwangeel8899@gmail.com';
 
 const SHOP_NAME = '興旺蒲燒鰻';
 
@@ -69,20 +69,17 @@ const PAYMENT_DEADLINE_HOURS = 48;
 const STATUS_OPTIONS = ['待付款', '待取貨', '已付款', '已出貨', '已完成', '已取消', '待確認'];
 
 /**
- * 面交地點（限這三處擇一），賣家會打電話與顧客約時間。
- * 需與網站 src/lib/pricing.ts 的 PICKUP_SPOTS 一致。
+ * 面交區域：購買 1 公斤只能在鹿港地區面交；2 公斤以上可選彰化市或鹿港。
+ * 實際面交地點與時間由賣家與顧客私下聯繫討論。
+ * 需與網站 src/lib/pricing.ts 的 PICKUP_AREAS 一致。
  */
-const PICKUP_SPOTS = ['臺南永康全家永德店', '國立南大附中', '金葡萄蛋黃酥復國店'];
+const PICKUP_AREAS = [
+  { name: '鹿港', minPacks: 1 },
+  { name: '彰化市', minPacks: 2 },
+];
 
-/**
- * 南大附中合作社專屬訂購頁（網站的 nda.html）的取貨地點。
- * 這個管道不問電話與地址，付款固定為「取貨時付款」，運費 0；Email 仍為必填（要寄確認信）。
- * 需與網站 src/lib/pricing.ts 的 NDA_PICKUP_LABEL 一致。
- */
-const NDA_PICKUP_LABEL = '南大附中合作社';
-
-/** 南大附中訂單的編號前綴，與一般訂單分開比較好認 */
-const NDA_ORDER_PREFIX = 'NDA';
+/** 面交提醒，寫在顧客確認信裡 */
+const COLD_BAG_NOTE = '面交請自備保冷袋。';
 
 /**
  * 優惠碼清單 —— 這是整套系統唯一存放優惠碼與折扣額度的地方。
@@ -210,28 +207,30 @@ function doPost(e) {
     const freeBoxes = Math.min(boxes, freeGiftBoxes(packs));
     const extraBoxes = Math.max(0, boxes - freeBoxes);
 
-    // 訂購管道：'nda' 是南大附中合作社專屬頁，取貨與付款固定，不需要電話／地址／Email
-    const channel = data.channel === 'nda' ? 'nda' : 'web';
-
     // 取貨與付款：付現只限面交；其餘為銀行轉帳或 LINE Pay（前端已限制，這裡再擋一次）
-    const delivery = channel === 'nda' || data.delivery === 'pickup' ? 'pickup' : 'ship';
-    const payment = channel === 'nda' ? 'cash'
-      : data.payment === 'cash' && delivery === 'pickup' ? 'cash'
+    const delivery = data.delivery === 'pickup' ? 'pickup' : 'ship';
+    const payment = data.payment === 'cash' && delivery === 'pickup' ? 'cash'
       : data.payment === 'linepay' ? 'linepay'
       : 'transfer';
     // 只留數字；若客人填了整串帳號，取最後五碼
     const last5 = payment === 'transfer' ? String(data.last5 || '').replace(/[^0-9]/g, '').slice(-5) : '';
     const payerName = payment === 'transfer' ? String(data.payerName || '').trim().slice(0, 30) : '';
-    const pickupSpot = channel === 'nda' ? NDA_PICKUP_LABEL
-      : delivery === 'pickup' ? String(data.pickupSpot || '').trim()
-      : '';
+    // 面交區域（鹿港、彰化市）；網頁以 pickupSpot 欄位送來
+    const pickupSpot = delivery === 'pickup' ? String(data.pickupSpot || '').trim() : '';
 
     if (!name) return json({ ok: false, message: '缺少收件人姓名' });
-    if (channel !== 'nda' && !phone) return json({ ok: false, message: '缺少聯絡電話' });
+    if (!phone) return json({ ok: false, message: '缺少聯絡電話' });
     if (delivery === 'ship' && !address) return json({ ok: false, message: '缺少收件地址' });
-    if (channel !== 'nda' && delivery === 'pickup' && PICKUP_SPOTS.indexOf(pickupSpot) === -1) return json({ ok: false, message: '請選擇面交地點' });
+    if (delivery === 'pickup') {
+      const area = findPickupArea_(pickupSpot);
+      if (!area) return json({ ok: false, message: '請選擇面交區域' });
+      // 前端已擋過，這裡再擋一次：例如彰化市需購買 2 公斤以上
+      if (packs < area.minPacks) {
+        return json({ ok: false, message: area.name + '面交需購買 ' + area.minPacks + ' 公斤以上' });
+      }
+    }
     if (payment === 'linepay' && !lineId) return json({ ok: false, message: '選擇 LINE Pay 請填寫 LINE ID' });
-    // Email 為必填：顧客要靠確認信核對訂單內容，避免到貨後爭議（南大附中的訂單也一樣）
+    // Email 為必填：顧客要靠確認信核對訂單內容，避免到貨後爭議
     if (!email) return json({ ok: false, message: '缺少 Email' });
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ ok: false, message: 'Email 格式不正確' });
     if (packs < 1) return json({ ok: false, message: '訂單數量為 0' });
@@ -255,9 +254,9 @@ function doPost(e) {
 
     const total = itemsTotal + giftTotal + shipping - discount;
 
-    // 試算表「地址」欄：面交訂單記地點與顧客方便的時段
-    const addressCell = channel === 'nda' ? ''
-      : delivery === 'pickup' ? '面交：' + pickupSpot + (address ? '（' + address + '）' : '')
+    // 試算表「地址」欄：面交訂單記區域與顧客希望的地點或時段
+    const addressCell = delivery === 'pickup'
+      ? '面交：' + pickupSpot + (address ? '（' + address + '）' : '')
       : address;
 
     // 用鎖避免同時下單時訂單編號重複
@@ -269,7 +268,7 @@ function doPost(e) {
     try {
       const sheet = getSheet_();
       now = new Date();
-      orderNo = nextOrderNo_(sheet, now, channel === 'nda' ? NDA_ORDER_PREFIX : 'XW');
+      orderNo = nextOrderNo_(sheet, now);
 
       // 電話、LINE ID、後五碼前面加 '，強制以文字存入，避免開頭的 0 被試算表當成數字吃掉
       sheet.appendRow([
@@ -277,7 +276,7 @@ function doPost(e) {
         qa, qb, qc, packs, packaging === 'gift' ? '送禮' : '自用', boxes,
         itemsTotal, giftTotal, shipping, promoCode, discount,
         total,
-        channel === 'nda' ? NDA_PICKUP_LABEL : delivery === 'pickup' ? '面交' : '宅配',
+        delivery === 'pickup' ? '面交' : '宅配',
         paymentLabel_(payment),
         payerName,
         last5 ? "'" + last5 : '',
@@ -302,7 +301,7 @@ function doPost(e) {
       itemsTotal: itemsTotal, packaging: packaging, shipping: shipping,
       freeBoxes: freeBoxes, extraBoxes: extraBoxes, giftTotal: giftTotal,
       promoCode: promoCode, discount: discount, total: total,
-      channel: channel, delivery: delivery, pickupSpot: pickupSpot,
+      delivery: delivery, pickupSpot: pickupSpot,
       payment: payment, payerName: payerName, last5: last5,
       payDeadline: payDeadline, bank: bank,
     };
@@ -571,12 +570,9 @@ function applyStatusValidation_(sheet) {
   sheet.getRange(2, col, rows, 1).setDataValidation(rule);
 }
 
-/**
- * 產生 XW20260906-001 形式的訂單編號。
- * prefixLetters 可換成別的前綴（南大附中訂單用 NDA），同一天各自從 001 開始。
- */
-function nextOrderNo_(sheet, now, prefixLetters) {
-  const prefix = (prefixLetters || 'XW') + Utilities.formatDate(now, 'Asia/Taipei', 'yyyyMMdd');
+/** 產生 XW20260906-001 形式的訂單編號 */
+function nextOrderNo_(sheet, now) {
+  const prefix = 'XW' + Utilities.formatDate(now, 'Asia/Taipei', 'yyyyMMdd');
   const lastRow = sheet.getLastRow();
   let count = 0;
 
@@ -620,11 +616,9 @@ function orderBody_(o) {
       ? '送禮（禮盒 ' + o.boxes + ' 個，其中免費 ' + o.freeBoxes +
         (o.extraBoxes ? '、加購 ' + o.extraBoxes + ' 個 ' + money_(o.giftTotal) : '') + '）'
       : '自用（不附禮盒）'),
-    o.channel === 'nda'
-      ? '運費：' + NDA_PICKUP_LABEL + '取貨，免運費'
-      : o.delivery === 'pickup'
-        ? '運費：面交，免運費'
-        : '運費（共 ' + o.packs + ' 公斤）：' + (o.shipping === 0 ? '免運費' : money_(o.shipping)),
+    o.delivery === 'pickup'
+      ? '運費：面交，免運費'
+      : '運費（共 ' + o.packs + ' 公斤）：' + (o.shipping === 0 ? '免運費' : money_(o.shipping)),
     o.discount > 0 ? '優惠碼折抵（' + o.promoCode + '）：-' + money_(o.discount) : '',
     '應付總金額：' + money_(o.total),
     '付款方式：' + paymentLabel_(o.payment) + (o.payment === 'transfer' ? payerLabel_(o)
@@ -633,14 +627,21 @@ function orderBody_(o) {
     '【收件資料】',
     '姓名：' + o.name,
     o.phone ? '電話：' + o.phone : '',
-    '取貨方式：' + (o.channel === 'nda' ? NDA_PICKUP_LABEL : o.delivery === 'pickup' ? '面交' : '黑貓冷凍宅配'),
-    o.channel === 'nda' ? ''
-      : o.delivery === 'pickup'
-        ? '面交地點：' + o.pickupSpot + (o.address ? '\n方便時段：' + o.address : '')
-        : '地址：' + o.address,
+    '取貨方式：' + (o.delivery === 'pickup' ? '面交' : '黑貓冷凍宅配'),
+    o.delivery === 'pickup'
+      ? '面交區域：' + o.pickupSpot + (o.address ? '\n希望的地點或時段：' + o.address : '')
+      : '地址：' + o.address,
     o.email ? 'Email：' + o.email : '',
     o.note ? '備註：' + o.note : '',
   ].filter(function (line) { return line !== ''; }).join('\n');
+}
+
+/** 依名稱找面交區域設定，找不到回傳 null */
+function findPickupArea_(name) {
+  for (let i = 0; i < PICKUP_AREAS.length; i++) {
+    if (PICKUP_AREAS[i].name === name) return PICKUP_AREAS[i];
+  }
+  return null;
 }
 
 /** 付款方式的中文名稱（試算表、信件共用） */
@@ -661,11 +662,7 @@ function payerLabel_(o) {
 /** 顧客確認信裡的付款說明 */
 function paymentInstructions_(o) {
   if (o.payment === 'cash') {
-    return ['【付款資訊】',
-      o.channel === 'nda'
-        ? '請於 ' + NDA_PICKUP_LABEL + ' 取貨時付款 ' + money_(o.total) + '。'
-        : '請於面交時付現 ' + money_(o.total) + '。',
-    ].join('\n');
+    return ['【付款資訊】', '請於面交時付現 ' + money_(o.total) + '。'].join('\n');
   }
   if (o.payment === 'linepay') {
     return [
@@ -703,18 +700,15 @@ function notifyShop_(o) {
   MailApp.sendEmail({
     to: to,
     subject: '【' + SHOP_NAME + '】新訂單 ' + o.orderNo + '　' + o.name + '　' + money_(o.total)
-      + (o.channel === 'nda' ? '（南大附中）'
-        : o.payment === 'cash' ? '（取貨付現）' : o.payment === 'linepay' ? '（LINE Pay）' : '（轉帳）')
+      + (o.payment === 'cash' ? '（取貨付現）' : o.payment === 'linepay' ? '（LINE Pay）' : '（轉帳）')
       + (o.discount > 0 ? '（已用優惠碼）' : ''),
     body: orderBody_(o)
       + (o.payment === 'linepay'
         ? '\n\n➜ 請用 LINE 搜尋 ID「' + o.lineId + '」加顧客好友，傳送 LINE Pay 付款方式。'
         : '')
-      + (o.channel === 'nda'
-        ? '\n\n➜ 南大附中合作社訂單，到貨後請通知顧客到合作社取貨並付款。'
-        : o.delivery === 'pickup'
-          ? '\n\n➜ 請打電話與顧客約定面交時間（地點：' + o.pickupSpot + '）。'
-          : '')
+      + (o.delivery === 'pickup'
+        ? '\n\n➜ 請與顧客聯繫討論面交地點與時間（區域：' + o.pickupSpot + '）。'
+        : '')
       + '\n\n—\n本信由訂單系統自動發送。',
   });
 }
@@ -732,13 +726,11 @@ function notifyCustomer_(o) {
       '',
       paymentInstructions_(o),
       '',
-      o.channel === 'nda'
-        ? '【取貨】\n地點：' + NDA_PICKUP_LABEL + '\n到貨後我們會通知您到合作社取貨並付款。\n'
-        : o.delivery === 'pickup'
-          ? '【面交】\n地點：' + o.pickupSpot + '\n我們會打電話與您約定面交時間。\n'
-          : '',
+      o.delivery === 'pickup'
+        ? '【面交】\n區域：' + o.pickupSpot + '\n面交地點與時間我們會再與您聯繫討論。\n' + COLD_BAG_NOTE + '\n'
+        : '',
       o.boxes > 0
-        ? '※ 禮盒會分開包裝、' + (o.channel === 'nda' ? '取貨時一併交給您' : o.delivery === 'pickup' ? '面交時一併交給您' : '隨同一箱寄出') +
+        ? '※ 禮盒會分開包裝、' + (o.delivery === 'pickup' ? '面交時一併交給您' : '隨同一箱寄出') +
           '，不會預先把鰻魚裝進去（紙盒與冷凍品放在一起容易受潮）。' +
           '\n　 請收到後先將鰻魚冷凍保存，要送禮前再自行裝盒。\n'
         : '',
@@ -780,26 +772,6 @@ function testWrite() {
         last5: '01234',
         giftBoxes: 2,
         promoCode: PROMO_CODES.length ? PROMO_CODES[0].codes[0] : '',
-      }),
-    },
-  };
-  Logger.log(doPost(fake).getContent());
-}
-
-/**
- * 測試南大附中合作社的訂單（不需要電話與 Email）。
- * 執行後試算表會多一筆 NDA 開頭的測試訂單，確認完請自行刪除該列。
- */
-function testNdaWrite() {
-  const fake = {
-    postData: {
-      contents: JSON.stringify({
-        channel: 'nda',
-        name: '測試南大附中',
-        note: '這是一筆測試訂單，確認後請刪除',
-        quantities: { A: 1, B: 1, C: 0 },
-        packaging: 'gift',
-        giftBoxes: 2,
       }),
     },
   };

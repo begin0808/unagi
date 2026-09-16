@@ -10,7 +10,6 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         acr: resolve(__dirname, 'ACR.html'),
-        nda: resolve(__dirname, 'nda.html'),
       },
     },
   },

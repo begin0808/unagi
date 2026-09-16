@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  ShoppingBag, ChevronDown, MessageCircle, MapPin, 
+  ShoppingBag, ChevronDown, MessageCircle, MapPin, Phone, 
   Clock, CheckCircle, Award, Sparkles, Flame, Truck, 
   Utensils, ExternalLink, HelpCircle, ChevronRight, Gift, Mail
 } from 'lucide-react';
 import OrderForm from './components/OrderForm';
 import {
-  PRODUCTS, EMPTY_QUANTITIES, shippingFaqLines, PRICE_PER_KG, PAYMENT_DEADLINE_HOURS, PICKUP_SPOTS, currency,
+  PRODUCTS, EMPTY_QUANTITIES, shippingFaqLines, PRICE_PER_KG, PAYMENT_DEADLINE_HOURS, COLD_BAG_NOTE, currency,
   type Quantities, type SpecId,
 } from './lib/pricing';
-import { CONTACT_EMAIL } from './lib/contact';
+import { PHONES, CONTACT_EMAIL, formatPhone, telHref, phoneListText } from './lib/contact';
 
 // --- 常見問題資料 (FAQ) ---
 const FAQS = [
@@ -30,7 +30,8 @@ const FAQS = [
       "宅配訂單可選擇銀行轉帳（ATM 或網路銀行）或 LINE Pay 付款。選擇轉帳，送出訂單後匯款帳號會寄到您填寫的 Email（訂單確認信）；選擇 LINE Pay 請填寫您的 LINE ID，賣家會加您好友並傳送付款方式。\n" +
       "請於下單後 " + PAYMENT_DEADLINE_HOURS + " 小時內完成付款，確認收款後即安排出貨。使用 LINE Pay 轉帳時，請在留言填寫訂單編號。\n\n" +
       "下單時可以先填匯款人姓名或匯款帳號後五碼，方便我們核對；若還不確定會用哪個帳戶轉帳，轉帳後直接回覆確認信告知即可。\n\n" +
-      "也可以選擇在臺南面交（" + PICKUP_SPOTS.join("、") + "，三處擇一），賣家會打電話與您約時間。面交免運費，除了轉帳與 LINE Pay 之外，也可以當面付現。"
+      "也可以選擇面交，免運費：購買 1 公斤可在鹿港地區面交；購買 2 公斤以上可在彰化市或鹿港面交，" +
+      "實際地點與時間再私下聯繫討論。" + COLD_BAG_NOTE + "面交除了轉帳與 LINE Pay 之外，也可以當面付現。"
   },
   {
     question: "保存方式為何？未開封可以冷凍保存多久？",
@@ -62,7 +63,8 @@ const FAQS = [
   {
     question: "想先詢問或訂單有問題，要怎麼聯絡你們？",
     answer:
-      "歡迎來信：" + CONTACT_EMAIL + "\n" +
+      "訂購專線：" + phoneListText() + "\n" +
+      "Email：" + CONTACT_EMAIL + "\n" +
       "訂單送出後會收到確認信，直接回覆那封信也找得到我們。\n" +
       "到貨時間、指定日期、面交、大量訂購與送禮包裝需求，都可以先與我們討論。"
   },
@@ -685,7 +687,7 @@ const App = () => {
                   <span className="inline-block">中秋等節慶檔期物流較繁忙，建議提早下單。</span>
                   <span className="inline-block">到貨時間、指定日期、面交、</span>
                   <span className="inline-block">大量訂購與送禮包裝，</span>
-                  <span className="inline-block">歡迎先來信洽詢（信箱見頁尾）。</span>
+                  <span className="inline-block">歡迎先來電或來信洽詢（聯絡方式見頁尾）。</span>
                 </p>
               </div>
             </div>
@@ -703,7 +705,22 @@ const App = () => {
             <span className="font-bold text-lg tracking-wider text-white">興旺蒲燒鰻</span>
           </div>
 
-          <div className="text-stone-400 text-sm mb-2">訂購與客服請來信</div>
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-5 mb-3">
+            <span className="flex items-center gap-1.5 text-stone-400 text-sm">
+              <Phone size={16} className="text-amber-500" /> 訂購專線
+            </span>
+            <div className="flex flex-wrap justify-center gap-x-5 gap-y-1.5">
+              {PHONES.map((p) => (
+                <a
+                  key={p}
+                  href={telHref(p)}
+                  className="text-white font-bold tracking-wide hover:text-amber-400 transition-colors whitespace-nowrap"
+                >
+                  {formatPhone(p)}
+                </a>
+              ))}
+            </div>
+          </div>
 
           <div className="mb-5">
             <a
@@ -721,7 +738,7 @@ const App = () => {
             </p>
             <p className="flex items-center gap-1.5">
                <Truck size={16} className="text-amber-500" />
-               <span>配送：黑貓低溫冷凍宅配</span>
+               <span>配送：黑貓低溫冷凍宅配・鹿港／彰化市面交</span>
             </p>
             <a 
                href="./ACR.html" 

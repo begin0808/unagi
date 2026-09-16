@@ -1,6 +1,6 @@
 /**
  * 訂購表單的共用小元件：數量選擇器、欄位外框與輸入框樣式。
- * 主訂購表單（OrderForm）與南大附中專屬表單（NdaOrderForm）共用，樣式才不會走樣。
+ * 抽出來放在這裡，讓 OrderForm 本體專心處理訂購流程。
  */
 import React from 'react';
 import { Minus, Plus, AlertTriangle } from 'lucide-react';

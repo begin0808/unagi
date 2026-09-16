@@ -58,22 +58,23 @@ export function totalFillets(quantities: Quantities): number {
 export type Packaging = 'self' | 'gift';
 
 /**
- * 取貨方式：黑貓冷凍宅配，或在臺南指定地點面交。
+ * 取貨方式：黑貓冷凍宅配，或在鹿港／彰化市面交。
  * 面交不經過黑貓，運費一律為 0。
  */
 export type Delivery = 'ship' | 'pickup';
 
 /**
- * 面交地點（限這三處擇一），賣家會打電話與顧客約時間。
- * 需與 gas/Code.gs 的 PICKUP_SPOTS 一致。
+ * 面交區域：購買 1 公斤只能在鹿港地區面交；2 公斤以上可選彰化市或鹿港。
+ * 實際面交地點與時間由賣家與顧客私下聯繫討論。
+ * 需與 gas/Code.gs 的 PICKUP_AREAS 一致。
  */
-export const PICKUP_SPOTS = ['臺南永康全家永德店', '國立南大附中', '金葡萄蛋黃酥復國店'] as const;
+export const PICKUP_AREAS = [
+  { name: '鹿港', minPacks: 1 },
+  { name: '彰化市', minPacks: 2 },
+] as const;
 
-/**
- * 南大附中合作社專屬訂購頁（nda.html）的取貨地點。
- * 需與 gas/Code.gs 的 NDA_PICKUP_LABEL 一致。
- */
-export const NDA_PICKUP_LABEL = '南大附中合作社';
+/** 面交提醒，網頁與確認信都會顯示 */
+export const COLD_BAG_NOTE = '面交請自備保冷袋。';
 
 /**
  * 銀行轉帳的付款期限（小時）。

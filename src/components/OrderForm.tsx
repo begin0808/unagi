@@ -2,11 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Minus, Plus, Gift, Truck, ShoppingBag, CheckCircle2, AlertTriangle,
   Loader2, X, ExternalLink, ClipboardList, Ticket, CheckCircle, ChevronRight, Leaf,
-  Wallet, Landmark, Banknote, MapPin, Mail, Smartphone,
+  Wallet, Landmark, Banknote, MapPin, Mail, Smartphone, Snowflake,
 } from 'lucide-react';
 import {
   SPECS, PRICE_PER_KG, SHIPPING_TIERS, FREE_SHIPPING_PACKS, PAYMENT_DEADLINE_HOURS,
-  GIFT_BOX_CAPACITY, GIFT_BOX_PRICE, PICKUP_SPOTS,
+  GIFT_BOX_CAPACITY, GIFT_BOX_PRICE, PICKUP_AREAS, COLD_BAG_NOTE,
   calcOrder, currency,
   type Quantities, type SpecId, type Packaging, type Delivery,
 } from '../lib/pricing';
@@ -57,7 +57,10 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
   // 取貨與付款
   const [delivery, setDelivery] = useState<Delivery>('ship');
   const [pickupNote, setPickupNote] = useState('');
+  /** 面交區域（鹿港、彰化市） */
   const [pickupSpot, setPickupSpot] = useState('');
+  // 公斤數減少、不再符合原本選的面交區域時，清掉選擇並提示
+  const [areaAdjusted, setAreaAdjusted] = useState(false);
   const [payment, setPayment] = useState<Payment>('transfer');
   // 選 LINE Pay 時必填：由賣家加顧客好友傳送付款方式（賣家不公開自己的 LINE ID）
   const [lineId, setLineId] = useState('');
@@ -128,6 +131,25 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
       setBoxAdjusted(true);
     }
   }, [totals.maxBoxes, packaging, giftBoxes]);
+
+  // 公斤數減少、不再符合所選的面交區域時（例如彰化市需 2 公斤以上），清掉選擇並提示
+  useEffect(() => {
+    const area = PICKUP_AREAS.find((a) => a.name === pickupSpot);
+    if (area && !areaAvailable(area.minPacks)) {
+      setPickupSpot('');
+      setAreaAdjusted(true);
+    }
+  }, [totals.packs, pickupSpot]);
+
+  /** 面交區域是否可選；還沒選商品時以 1 公斤計算，先讓客人選得到鹿港 */
+  function areaAvailable(minPacks: number) {
+    return Math.max(totals.packs, 1) >= minPacks;
+  }
+
+  const chooseArea = (name: string) => {
+    setPickupSpot(name);
+    setAreaAdjusted(false);
+  };
 
   const chooseGiftBoxes = (v: number) => {
     setGiftBoxes(v);
@@ -213,7 +235,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
       else if (address.trim().length < 8)
         next.address = '請填寫完整地址（含縣市與門牌號碼）';
     }
-    if (delivery === 'pickup' && !pickupSpot) next.pickupSpot = '請選擇面交地點';
+    if (delivery === 'pickup' && !pickupSpot) next.pickupSpot = '請選擇面交區域';
     if (!email.trim()) next.email = '請填寫 Email，我們會寄送訂單確認信給您核對';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
       next.email = 'Email 格式看起來不正確';
@@ -312,6 +334,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
     setDelivery('ship');
     setPickupNote('');
     setPickupSpot('');
+    setAreaAdjusted(false);
     setPayment('transfer');
     setLineId('');
     setPayerName('');
@@ -412,7 +435,8 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
               <Banknote size={18} /> 取貨時付現 {currency(finalTotal)}
             </div>
             <p className="text-stone-300 text-sm leading-relaxed">
-              賣家會打電話與您約定面交時間（地點：{pickupSpot}）。
+              <span className="inline-block">面交地點與時間會再與您聯繫討論（區域：{pickupSpot}）。</span>
+              <span className="inline-block text-sky-300">{COLD_BAG_NOTE}</span>
             </p>
           </div>
         )}
@@ -663,10 +687,10 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 }`}
               >
                 <div className="flex items-center gap-1.5 text-white font-bold text-sm">
-                  <MapPin size={15} className="text-green-400" /> 面交（臺南）
+                  <MapPin size={15} className="text-green-400" /> 面交（鹿港／彰化市）
                 </div>
                 <p className="text-stone-400 text-xs mt-1 leading-relaxed">
-                  限臺南三個地點擇一，免運費；賣家會打電話與您約時間。
+                  買 1 公斤可在鹿港面交，2 公斤以上可選彰化市或鹿港；免運費，地點與時間再私下討論。
                 </p>
               </button>
             </div>
@@ -691,42 +715,61 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
             </Field>
           ) : (
             <>
-              <div id="of-pickup-spot" role="radiogroup" aria-label="面交地點">
+              <div id="of-pickup-spot" role="radiogroup" aria-label="面交區域">
                 <div className="text-sm font-bold text-stone-200 mb-1.5">
-                  面交地點<span className="text-red-400 ml-1">*</span>
-                  <span className="font-normal text-stone-400 text-xs ml-2">三處擇一，賣家會打電話與您約時間</span>
+                  面交區域<span className="text-red-400 ml-1">*</span>
+                  <span className="font-normal text-stone-400 text-xs ml-2">實際地點與時間會再與您私下討論</span>
                 </div>
-                <div className="grid grid-cols-1 gap-2">
-                  {PICKUP_SPOTS.map((spot) => (
-                    <button
-                      key={spot}
-                      type="button"
-                      role="radio"
-                      aria-checked={pickupSpot === spot}
-                      onClick={() => setPickupSpot(spot)}
-                      className={`text-left px-4 py-3 rounded-xl border text-sm transition-colors flex items-center gap-2 ${
-                        pickupSpot === spot
-                          ? 'border-green-400/60 bg-green-500/10 text-white font-bold'
-                          : errors.pickupSpot
-                            ? 'border-red-500/60 bg-stone-900 text-stone-200 hover:border-white/30'
-                            : 'border-white/15 bg-stone-900 text-stone-200 hover:border-white/30'
-                      }`}
-                    >
-                      <MapPin size={15} className={pickupSpot === spot ? 'text-green-400' : 'text-stone-500'} />
-                      {spot}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 gap-2">
+                  {PICKUP_AREAS.map((area) => {
+                    const available = areaAvailable(area.minPacks);
+                    const selected = pickupSpot === area.name;
+                    return (
+                      <button
+                        key={area.name}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        disabled={!available}
+                        onClick={() => chooseArea(area.name)}
+                        className={`text-left px-4 py-3 rounded-xl border text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                          selected
+                            ? 'border-green-400/60 bg-green-500/10 text-white'
+                            : errors.pickupSpot
+                              ? 'border-red-500/60 bg-stone-900 text-stone-200 hover:border-white/30'
+                              : 'border-white/15 bg-stone-900 text-stone-200 hover:border-white/30'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2 font-bold">
+                          <MapPin size={15} className={selected ? 'text-green-400' : 'text-stone-500'} />
+                          {area.name}
+                        </span>
+                        <span className="block text-xs text-stone-400 mt-0.5">
+                          {area.minPacks <= 1 ? '購買 1 公斤即可' : `購買 ${area.minPacks} 公斤以上`}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
                 {errors.pickupSpot && (
                   <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
                     <AlertTriangle size={12} /> {errors.pickupSpot}
                   </p>
                 )}
+                {areaAdjusted && (
+                  <p className="text-amber-300 text-xs mt-1.5 flex items-start gap-1.5">
+                    <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
+                    商品數量減少，已不符合原本選的面交區域，請重新選擇。
+                  </p>
+                )}
+                <p className="text-sky-300 text-xs mt-2 flex items-center gap-1.5">
+                  <Snowflake size={13} className="flex-shrink-0" /> {COLD_BAG_NOTE}
+                </p>
               </div>
-              <Field id="of-pickup" label="方便面交的時段" hint="選填，例如平日晚上、週六下午">
+              <Field id="of-pickup" label="希望的面交地點或時段" hint="選填，方便我們安排">
                 <input id="of-pickup" className={inputClass} value={pickupNote}
                   onChange={(e) => setPickupNote(e.target.value)}
-                  placeholder="平日晚上 7 點後" autoComplete="off" />
+                  placeholder="例如：週六下午，鹿港市區" autoComplete="off" />
               </Field>
             </>
           )}
@@ -946,7 +989,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                     ? `匯款帳號會寄到您的 Email，請於 ${PAYMENT_DEADLINE_HOURS} 小時內完成匯款，確認入帳後安排出貨。`
                     : payment === 'linepay'
                       ? `賣家會加您的 LINE 好友並傳送付款方式，請於 ${PAYMENT_DEADLINE_HOURS} 小時內以 LINE Pay 完成付款，確認收款後安排出貨。`
-                      : '請於面交時付現，賣家會打電話與您約定時間。'}
+                      : '請於面交時付現，面交地點與時間會再與您聯繫討論。'}
                 </p>
               </>
             ) : (
@@ -981,7 +1024,7 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                 </li>
               ))}
               <li className="flex justify-between gap-3 pt-1.5 border-t border-white/10">
-                <span>臺南面交</span>
+                <span>鹿港／彰化市面交</span>
                 <span className="font-bold whitespace-nowrap text-green-400">免運費</span>
               </li>
             </ul>
@@ -1115,14 +1158,19 @@ const OrderForm = ({ quantities, setQuantities }: Props) => {
                     {delivery === 'ship'
                       ? <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">地址</dt><dd className="break-words">{address}</dd></div>
                       : <>
-                          <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">地點</dt><dd className="break-words">{pickupSpot}</dd></div>
-                          {pickupNote.trim() && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">時段</dt><dd className="break-words">{pickupNote}</dd></div>}
+                          <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">區域</dt><dd className="break-words">{pickupSpot}</dd></div>
+                          {pickupNote.trim() && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">希望</dt><dd className="break-words">{pickupNote}</dd></div>}
                         </>}
                     <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">付款</dt><dd>{payment === 'cash' ? '取貨時付現' : payment === 'linepay' ? 'LINE Pay' : '銀行轉帳'}{payment === 'transfer' && payerLabel && `（${payerLabel}）`}</dd></div>
                     {payment === 'linepay' && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">LINE ID</dt><dd className="break-all">{lineId}</dd></div>}
                     {email && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">Email</dt><dd className="break-all">{email}</dd></div>}
                     {note && <div className="flex gap-3"><dt className="text-stone-500 w-16 flex-shrink-0">備註</dt><dd className="whitespace-pre-line break-words">{note}</dd></div>}
                   </dl>
+                  {delivery === 'pickup' && (
+                    <p className="text-sky-300 text-xs flex items-center gap-1.5">
+                      <Snowflake size={13} className="flex-shrink-0" /> {COLD_BAG_NOTE}
+                    </p>
+                  )}
                 </div>
 
                 <div className="px-6 sm:px-7 pb-6 flex flex-col sm:flex-row gap-3">
