@@ -1,5 +1,4 @@
 User-agent: *
-Disallow: /nda.html
 Allow: /
 
 Sitemap: https://xingwang-unagi.vercel.app/sitemap.xml
