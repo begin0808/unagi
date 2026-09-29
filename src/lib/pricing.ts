@@ -146,7 +146,7 @@ const SPEC_SEEDS: SpecSeed[] = [
     gramsPerFillet: 250,
     hint: '油脂與肉質黃金平衡',
     description: '油脂豐潤度與肉質達到黃金完美平衡，滑順甘甜入口生香！',
-    detail: '【中秋人氣王】烤肉架上最吸睛焦點，老饕評鑑最佳黃金比例。',
+    detail: '【人氣王】烤肉架上最吸睛焦點，老饕評鑑最佳黃金比例。',
     tag: '人氣首選・油脂平衡',
     tagColor: 'bg-red-600',
   },

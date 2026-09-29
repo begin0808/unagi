@@ -22,7 +22,7 @@ const FAQS = [
     answer:
       "我們一律使用「黑貓低溫冷凍宅配」全程保鮮直送：\n" +
       shippingFaqLines() +
-      "\n確認訂單與款項後約 1～3 個工作天出貨。中秋等節慶檔期物流較繁忙，建議提早預訂以確保如期到貨。"
+      "\n確認訂單與款項後約 1～3 個工作天出貨。年節等節慶檔期物流較繁忙，建議提早預訂以確保如期到貨。"
   },
   {
     question: "付款方式有哪些？",
@@ -39,7 +39,7 @@ const FAQS = [
   },
   {
     question: "如何快速料理？蒲燒醬汁需要另外調味嗎？",
-    answer: "完全不需要！我們已為您調配道地正宗日式蒲燒醬汁，退冰後微波 3~5 分鐘即可直接鋪在熱騰騰白飯上享用。中秋節更可直接放上烤肉架、氣炸鍋或烤箱烘烤，炭香撲鼻、香氣四溢！"
+    answer: "完全不需要！我們已為您調配道地正宗日式蒲燒醬汁，退冰後微波 3~5 分鐘即可直接鋪在熱騰騰白飯上享用。也可以直接放上烤肉架、氣炸鍋或烤箱烘烤，炭香撲鼻、香氣四溢！"
   },
   {
     question: "送禮有附禮盒嗎？需要另外加購嗎？禮盒是怎麼寄的？",
@@ -80,7 +80,7 @@ const App = () => {
   
   // 設定網頁頁籤標題
   useEffect(() => {
-    document.title = "興旺蒲燒鰻 - 外銷日本頂級青口鰻 | 中秋送禮烤肉首選";
+    document.title = "興旺蒲燒鰻 - 外銷日本頂級青口鰻 | 秋冬進補・送禮自用首選";
   }, []);
 
   // 滾動到特定區塊
@@ -118,7 +118,7 @@ const App = () => {
             
             <div className="hidden md:flex items-center space-x-7">
               <button onClick={() => scrollToSection('news')} className="text-amber-400 hover:text-amber-300 transition-colors font-bold flex items-center gap-1.5">
-                <Sparkles size={16} /> 中秋限定特惠
+                <Sparkles size={16} /> 產地回饋特惠
               </button>
               <button onClick={() => scrollToSection('story')} className="text-stone-300 hover:text-amber-500 transition-colors">青口鰻傳奇</button>
               <a 
@@ -158,7 +158,7 @@ const App = () => {
         {isMenuOpen && (
           <div className="md:hidden bg-stone-900 border-b border-white/10">
             <div className="px-4 pt-3 pb-4 space-y-2">
-              <button onClick={() => scrollToSection('news')} className="block px-3 py-2 text-base font-bold text-amber-400 w-full text-left">🥮 中秋限定特惠</button>
+              <button onClick={() => scrollToSection('news')} className="block px-3 py-2 text-base font-bold text-amber-400 w-full text-left">✨ 產地回饋特惠</button>
               <button onClick={() => scrollToSection('story')} className="block px-3 py-2 text-base font-medium text-stone-300 hover:text-white w-full text-left">青口鰻傳奇</button>
               <a 
                 href="./ACR.html" 
@@ -231,7 +231,7 @@ const App = () => {
               onClick={() => scrollToSection('news')}
               className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 text-white text-lg font-bold rounded-xl hover:from-red-500 hover:to-red-600 hover:scale-105 transition-all shadow-[0_0_25px_rgba(220,38,38,0.4)] flex items-center justify-center gap-2"
             >
-              <Gift size={20} /> 查看中秋限定優惠
+              <Gift size={20} /> 查看產地回饋特惠
             </button>
             <button 
               onClick={() => scrollToSection('contact')}
@@ -256,16 +256,16 @@ const App = () => {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600/30 to-red-600/30 text-amber-200 px-5 py-2 rounded-full text-sm font-bold mb-5 border border-amber-500/30 shadow-[0_0_20px_rgba(217,119,6,0.2)]">
-              <span className="animate-pulse">🥮</span> 中秋特別企劃・伴手禮與烤肉極品
+              <span className="animate-pulse">🍂</span> 秋冬限定・進補送禮極品
             </div>
             
             <h2 className="text-[1.375rem] sm:text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight [text-wrap:balance]">
-              <span className="inline-block">中秋賞月烤肉少不了這一道！</span><br className="hidden sm:inline" />
+              <span className="inline-block">天氣轉涼，來一碗熱騰騰的鰻魚飯！</span><br className="hidden sm:inline" />
               <span className="text-amber-400 inline-block">日式料亭級「頂級青口蒲燒鰻」</span>
             </h2>
             
             <p className="text-base sm:text-lg md:text-xl text-stone-300 max-w-2xl mx-auto leading-relaxed [text-wrap:balance]">
-              <span className="inline-block">趁中秋前搶鮮下單，烤肉架上香氣逼人，一上桌就被搶光！</span>
+              <span className="inline-block">微波 3 分鐘就是料亭級鰻魚飯，全家吃得暖、吃得補！</span>
               <span className="inline-block">送禮體面又大方，與親友共享外銷日本的尊貴美味。</span>
             </p>
           </div>
@@ -334,9 +334,9 @@ const App = () => {
                 className="w-full sm:w-auto px-6 sm:px-12 py-4 bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-bold text-xl rounded-xl shadow-lg hover:shadow-amber-600/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-3 mx-auto"
               >
                 <ShoppingBag size={22} />
-                立即填單預購中秋極品
+                立即填單訂購
               </button>
-              <p className="mt-3 text-stone-400 text-sm">※ 中秋檔期訂單量大，建議儘早下單確保順利出貨</p>
+              <p className="mt-3 text-stone-400 text-sm">※ 每批數量有限，售完即止</p>
             </div>
           </div>
         </div>
@@ -571,19 +571,19 @@ const App = () => {
                <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 text-amber-400 group-hover:scale-110 transition-transform border border-amber-500/20">
                  <Utensils size={32} />
                </div>
-               <h3 className="text-white font-bold text-lg mb-2">微波加熱（最推薦）</h3>
+               <h3 className="text-white font-bold text-lg mb-2">微波加熱</h3>
                <p className="text-amber-400 text-xs font-bold mb-2 [text-wrap:balance]">退冰・需拆袋・<span className="whitespace-nowrap">3~5 分鐘</span></p>
                <p className="text-stone-400 text-xs leading-relaxed">
                  拆開真空袋將鰻魚置於盤中微波，醬汁熱氣騰騰，鋪在熱白飯上就是頂級鰻魚飯！
                </p>
             </div>
             
-            {/* 2. 中秋烤肉/烤箱 */}
+            {/* 2. 炭烤/烤箱 */}
             <div className="bg-stone-950 p-7 rounded-2xl border border-white/10 text-center group hover:border-red-500/50 transition-all hover:bg-stone-950/80">
                <div className="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 text-red-400 group-hover:scale-110 transition-transform border border-red-500/20">
                  <Flame size={32} />
                </div>
-               <h3 className="text-white font-bold text-lg mb-2">中秋炭烤 / 烤箱</h3>
+               <h3 className="text-white font-bold text-lg mb-2">炭烤 / 烤箱</h3>
                <p className="text-red-400 text-xs font-bold mb-2 [text-wrap:balance]">微退冰・需拆袋・<span className="whitespace-nowrap">5~10 分鐘</span></p>
                <p className="text-stone-400 text-xs leading-relaxed">
                  置於烤肉網或烤箱慢火覆熱，逼出豐厚油脂與炭香，外皮微焦香脆、香氣四溢！
@@ -684,7 +684,7 @@ const App = () => {
                   <span className="inline-block">內容有誤直接回覆該封信告知即可。</span>
                   <span className="inline-block">我們也會由專人與您聯繫，</span>
                   <span className="inline-block">確認出貨或取貨時間；</span>
-                  <span className="inline-block">中秋等節慶檔期物流較繁忙，建議提早下單。</span>
+                  <span className="inline-block">年節等節慶檔期物流較繁忙，建議提早下單。</span>
                   <span className="inline-block">到貨時間、指定日期、面交、</span>
                   <span className="inline-block">大量訂購與送禮包裝，</span>
                   <span className="inline-block">歡迎先來電或來信洽詢（聯絡方式見頁尾）。</span>
